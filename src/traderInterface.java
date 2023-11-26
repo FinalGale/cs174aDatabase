@@ -1,5 +1,4 @@
 import java.sql.*;
-import java.time.LocalDateTime;
 
 public class traderInterface {
     String currentUsername;
@@ -7,7 +6,7 @@ public class traderInterface {
 
     public void deposit(Connection connection, double depositAmount) throws SQLException {
         System.out.println("Preparing to Deposit...");
-        Timestamp currentTime = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         double currentBalance;
         
         try {
@@ -45,7 +44,7 @@ public class traderInterface {
     
     public void withdraw(Connection connection, double withdrawAmount) {
         System.out.println("Preparing to Withdraw...");
-        Timestamp currentTime = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         double currentBalance;
 
         try {
@@ -88,7 +87,7 @@ public class traderInterface {
 
     public void buy(Connection connection, double quantity, String stockSymbol) {
         System.out.println("Preparing to buy...");
-        Timestamp currentTime = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         double currentBalance, currentPrice;
 
         try {
@@ -160,7 +159,7 @@ public class traderInterface {
 
     public void sell(Connection connection, double quantity, String stockSymbol, double buyPrice) {
         System.out.println("Preparing to sell...");
-        Timestamp currentTime = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         double currentBalance, currentPrice, currentShares;
 
         try {
@@ -244,7 +243,7 @@ public class traderInterface {
     }
 
     public void cancel(Connection connection) {
-        
+
     }
 
     public double showBalance() {
