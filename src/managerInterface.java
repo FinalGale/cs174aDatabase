@@ -1,5 +1,11 @@
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 public class managerInterface {
     String currentManagerid;
+    Connection connection;
 
     public void addInterest(double monthlyInterestRate) {
 
