@@ -1,5 +1,6 @@
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.*;
 
 public class traderInterface {
     String currentUsername;
@@ -326,17 +327,17 @@ public class traderInterface {
                 System.out.println("ERROR: Cancel failed. There are no transactions to cancel.");
                 return;
             }
-            Timestamp timeStamp = resultSet.getTimestamp(2);
-            LocalDateTime date = timeStamp.toLocalDateTime();
+            Timestamp timestamp = resultSet.getTimestamp(2);
+            LocalDateTime date = timestamp.toLocalDateTime();
             String transactionType = resultSet.getString(3);
             double amountTransferred = resultSet.getDouble(4);
             getMarketTransaction.close();
 
             //get the most recent buy/sell StockTransaction
-            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ? AND S.date = ? AND S.transactionType = ?";
+            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ? AND S.timestamp = ? AND S.transactionType = ?";
             PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
             getStockTransaction.setInt(1, accountId);
-            getStockTransaction.setTimestamp(2, timeStamp);
+            getStockTransaction.setTimestamp(2, timestamp);
             getStockTransaction.setString(2, transactionType);
             String stockSymbol = resultSet.getString(4);
             String buyPrices = resultSet.getString(5);
@@ -521,24 +522,8 @@ public class traderInterface {
 
     public void showTransactionHistory() {
         try {
-            //get all MarketTransactions
-            queryString = "SELECT * FROM MarketTransaction AS M WHERE M.accountId = ?";
-            PreparedStatement getMarketTransaction = connection.prepareStatement(queryString);
-            getMarketTransaction.setInt(1, accountId);
-            ResultSet resultSet = getMarketTransaction.executeQuery();
-
-            List<Pair<long, String>> marketTransactions = new ArrayList<>();
-            while (resultSet.next()) {
-                Timestamp timeStamp = resultSet.getTimestamp(2);
-                String transactionType = resultSet.getString(3);
-                double amountTransferred = resultSet.getDouble(4);
-
-                Pair<long, String> curTransaction = new Pair<>(timeStamp.getTime(), timeStamp.) 
-            }
-            getMarketTransaction.close();
-
             //get all StockTransactions
-            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ?";
+            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ? ORDER BY S.Timestamp";
             PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
             getStockTransaction.setInt(1, accountId);
             resultSet = getStockTransaction.executeQuery();
@@ -551,8 +536,11 @@ public class traderInterface {
                 double sellPrice = resultSet.getDouble(6);
                 String quantities = resultSet.getString(7);
                 getStockTransaction.close();
-            }
 
+                sortedTransactions.put(timestamp.getTime(), 
+                    "Timestamp: " + timestamp.toLocalDateTime() + "; Transaction Type: " + transactionType + "; Stock Symbol: " +
+                        stockSymbol + "; Buy Prices: " + buyPrices + "; Sell Price: " + sellPrice + "; Quantities: " + quantities);
+            }
         } catch (Exception e) {
             System.out.println("ERROR: showTransactionHistory failed.");
             System.out.println(e);
