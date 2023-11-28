@@ -500,12 +500,63 @@ public class traderInterface {
         }
     }
 
-    public double showBalance() {
-        return 0;
+    public void showBalance(Connection connection) {
+        try {
+            //get the trader's current balance
+            String queryString = "SELECT B.amount FROM BALANCE AS B WHERE B.accountId = ? AND B.timestamp = " + 
+                                    "(SELECT MAX(B2.timestamp) FROM BALANCE AS B2 WHERE B2.accountId = ?)";
+            PreparedStatement getBalance = connection.prepareStatement(queryString);
+            getBalance.setInt(1, accountId);
+            getBalance.setInt(2, accountId);
+            ResultSet resultSet = getBalance.executeQuery();
+            double currentBalance = resultSet.getDouble(1);
+            getBalance.close();
+
+            System.out.println("Your current account balance is: " + String.format("%.2f", currentBalance));
+        } catch (Exception e) {
+            System.out.println("ERROR: showBalance failed.");
+            System.out.println(e);
+        }
     }
 
-    public String showTransactionHistory() {
-        return "";
+    public void showTransactionHistory() {
+        try {
+            //get all MarketTransactions
+            queryString = "SELECT * FROM MarketTransaction AS M WHERE M.accountId = ?";
+            PreparedStatement getMarketTransaction = connection.prepareStatement(queryString);
+            getMarketTransaction.setInt(1, accountId);
+            ResultSet resultSet = getMarketTransaction.executeQuery();
+
+            List<Pair<long, String>> marketTransactions = new ArrayList<>();
+            while (resultSet.next()) {
+                Timestamp timeStamp = resultSet.getTimestamp(2);
+                String transactionType = resultSet.getString(3);
+                double amountTransferred = resultSet.getDouble(4);
+
+                Pair<long, String> curTransaction = new Pair<>(timeStamp.getTime(), timeStamp.) 
+            }
+            getMarketTransaction.close();
+
+            //get all StockTransactions
+            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ?";
+            PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
+            getStockTransaction.setInt(1, accountId);
+            resultSet = getStockTransaction.executeQuery();
+
+            while (resultSet.next()) {
+                Timestamp timestamp = resultSet.getTimestamp(2);
+                String transactionType = resultSet.getString(3);
+                String stockSymbol = resultSet.getString(4);
+                String buyPrices = resultSet.getString(5);
+                double sellPrice = resultSet.getDouble(6);
+                String quantities = resultSet.getString(7);
+                getStockTransaction.close();
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR: showTransactionHistory failed.");
+            System.out.println(e);
+        }
     }
 
     public String getCurStockPriceAndProfile(String stockSymbol) {
