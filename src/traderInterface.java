@@ -520,14 +520,15 @@ public class traderInterface {
         }
     }
 
-    public void showTransactionHistory() {
+    public void showTransactionHistory(Connection connection) {
         try {
             //get all StockTransactions
-            queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ? ORDER BY S.Timestamp";
+            String queryString = "SELECT * FROM StockTransaction AS S WHERE S.accountId = ? ORDER BY S.Timestamp";
             PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
             getStockTransaction.setInt(1, accountId);
-            resultSet = getStockTransaction.executeQuery();
+            ResultSet resultSet = getStockTransaction.executeQuery();
 
+            System.out.println("Transactions this month: ");
             while (resultSet.next()) {
                 Timestamp timestamp = resultSet.getTimestamp(2);
                 String transactionType = resultSet.getString(3);
@@ -537,7 +538,7 @@ public class traderInterface {
                 String quantities = resultSet.getString(7);
                 getStockTransaction.close();
 
-                sortedTransactions.put(timestamp.getTime(), 
+                System.out.println(
                     "Timestamp: " + timestamp.toLocalDateTime() + "; Transaction Type: " + transactionType + "; Stock Symbol: " +
                         stockSymbol + "; Buy Prices: " + buyPrices + "; Sell Price: " + sellPrice + "; Quantities: " + quantities);
             }
@@ -547,20 +548,48 @@ public class traderInterface {
         }
     }
 
-    public String getCurStockPriceAndProfile(String stockSymbol) {
-        return "";
+    public void getCurStockPriceAndStarProfile(Connection connection, String stockSymbol) {
+        try {
+            String queryString = "SELECT * FROM StarProfile AS S WHERE S.stockSymbol = ?";
+            PreparedStatement getStockInfo = connection.prepareStatement(queryString);
+            getStockInfo.setString(1, stockSymbol);
+            ResultSet resultSet = getStockInfo.executeQuery();
+            String name = resultSet.getString(2);
+            double currentPrice = resultSet.getDouble(4);
+            Timestamp dateOfBirth = resultSet.getTimestamp(5);
+            getStockInfo.close();
+
+            System.out.println("Current Price for " + stockSymbol + ": " + currentPrice + " USD\n" +
+                                "Actor Profile for " + name + ":\n" +
+                                "Date of Birth: " + dateOfBirth);
+            System.out.println("----------------------------------------");
+
+            queryString = "SELECT * FROM SignedContract AS S WHERE S.stockSymbol = ?";
+            PreparedStatement getContractInfo = connection.prepareStatement(queryString);
+            getContractInfo.setString(1, stockSymbol);
+            resultSet = getStockInfo.executeQuery();
+
+            System.out.println("Movie Contracts signed by " + name + ": ");
+            while(resultSet.next()) {
+                String title = resultSet.getString(2);
+                int productionYear = resultSet.getInt(3);
+                String role = resultSet.getString(4);
+                double totalValue = resultSet.getDouble(5);
+                System.out.println("Movie title: " + title + "; Production Year: " + productionYear + "; Role: " + role + "; Total Payment Value: " + totalValue);
+            }
+            getContractInfo.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: getCurStockPriceAndStarProfile failed.");
+            System.out.println(e);
+        }
     }
 
-    public String listMovieInfo(String title, int productionYear) {
-        return "";
+    public void getTopMovies(int startDate, int stopDate) {
+
     }
 
-    public String[] getTopMovies(int startDate, int stopDate) {
-        return null;
-    }
+    public void getReviews(String title, int productionYear) {
 
-    public String[] getReviews(String title, int productionYear) {
-        return null;
     }
 
     public static void main(String args[]) {
