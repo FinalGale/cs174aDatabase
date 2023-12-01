@@ -1,4 +1,5 @@
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,8 +32,19 @@ public class managerInterface {
 
     }
 
-    public void openMarket() {
-
+    public void openMarket(String newDate) {
+        System.out.println("Opening market to date " + newDate);
+        try {
+            // change the date in date table
+            PreparedStatement updateDate = connection.prepareStatement("UPDATE CurrDate SET date = ?");
+            updateDate.setDate(1, java.sql.Date.valueOf(newDate));
+            updateDate.executeQuery();
+            updateDate.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: Opening Market failed.");
+            System.out.println(e);
+        }
     }
 
     public void closeMarket() {
@@ -43,7 +55,4 @@ public class managerInterface {
 
     }
 
-    public void setDate() {
-
-    }
 }
