@@ -584,12 +584,46 @@ public class traderInterface {
         }
     }
 
-    public void getTopMovies(int startDate, int stopDate) {
+    public void getTopMovies(Connection connection, int startDate, int stopDate) {
+        try {
+            String queryString = "SELECT M.title, M.productionYear FROM Movie AS M WHERE M.productionYear >= ? AND M.productionYear <= ? AND M.rating = 10";
+            PreparedStatement getTopMovies = connection.prepareStatement(queryString);
+            getTopMovies.setInt(1, startDate);
+            getTopMovies.setInt(2, stopDate);
+            ResultSet resultSet = getTopMovies.executeQuery();
 
+            System.out.println("Top rated movies (" + startDate + "-" + stopDate + "): ");
+            while (resultSet.next()) {
+                String title = resultSet.getString(1);
+                int productionYear = resultSet.getInt(2);
+                System.out.println(title + " (" + productionYear + ")");
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: getTopMovies failed.");
+            System.out.println(e);
+        }
     }
 
-    public void getReviews(String title, int productionYear) {
+    public void getReviews(Connection connection, String title, int productionYear) {
+        try {
+            String queryString = "SELECT * FROM Review as R WHERE M.title = ? AND M.productionYear = ?";
+            PreparedStatement getReviews = connection.prepareStatement(queryString);
+            getReviews.setString(1, title);
+            getReviews.setInt(2, productionYear);
+            ResultSet resultSet = getReviews.executeQuery();
 
+            System.out.println("Movie Reviews for " + title + " (" + productionYear + "): \n");
+            while(resultSet.next()) {
+                String username = resultSet.getString(1);
+                String writtenContent = resultSet.getString(4);
+                System.out.println("Review by " + username + ": ");
+                System.out.println(writtenContent + "\n");
+            }
+            getReviews.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: getReviews failed.");
+            System.out.println(e);
+        }
     }
 
     public static void main(String args[]) {
