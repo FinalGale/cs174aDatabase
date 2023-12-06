@@ -32,21 +32,14 @@ public class traderInterface {
             }
             getBalance.close();
 
-            PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
-            updateMT.setInt(1, marketAccountID);
-            updateMT.setDate(2, currentDate);
-            updateMT.setInt(3, orderNumber+1);
-            updateMT.setString(4, "deposit");
-            updateMT.setDouble(4, currentBalance + depositAmount);
-            updateMT.executeQuery();
-            updateMT.close();
-
-            PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-            updateMadeMT.setInt(1, marketAccountID);
-            updateMadeMT.setDate(2, currentDate);
-            updateMadeMT.setInt(3, orderNumber);
-            updateMadeMT.executeQuery();
-            updateMadeMT.close();
+            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            insertMT.setInt(1, marketAccountID);
+            insertMT.setDate(2, currentDate);
+            insertMT.setInt(3, orderNumber+1);
+            insertMT.setString(4, "deposit");
+            insertMT.setDouble(4, currentBalance + depositAmount);
+            insertMT.executeQuery();
+            insertMT.close();
 
             connection.close();
         } catch (Exception e) {
@@ -55,7 +48,7 @@ public class traderInterface {
         }
     }
     
-    public void withdraw(Connection connection, double withdrawAmount) {
+    public void withdraw(Connection connection, double withdrawAmount) throws SQLException {
         System.out.println("Preparing to Withdraw...");
         int orderNumber = 0;
         java.sql.Date currentDate = new java.sql.Date(0);
@@ -87,21 +80,14 @@ public class traderInterface {
                 return;
             }
 
-            PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
-            updateMT.setInt(1, marketAccountID);
-            updateMT.setDate(2, currentDate);
-            updateMT.setInt(3, orderNumber+1);
-            updateMT.setString(4, "withdraw");
-            updateMT.setDouble(4, currentBalance - withdrawAmount);
-            updateMT.executeQuery();
-            updateMT.close();
-
-            PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-            updateMadeMT.setInt(1, marketAccountID);
-            updateMadeMT.setDate(2, currentDate);
-            updateMadeMT.setInt(3, orderNumber);
-            updateMadeMT.executeQuery();
-            updateMadeMT.close();
+            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            insertMT.setInt(1, marketAccountID);
+            insertMT.setDate(2, currentDate);
+            insertMT.setInt(3, orderNumber+1);
+            insertMT.setString(4, "withdraw");
+            insertMT.setDouble(4, currentBalance - withdrawAmount);
+            insertMT.executeQuery();
+            insertMT.close();
 
             connection.close();
         } catch (Exception e) {
@@ -110,7 +96,7 @@ public class traderInterface {
         }
     }
 
-    public void buy(Connection connection, double quantity, String stockSymbol) {
+    public void buy(Connection connection, double quantity, String stockSymbol) throws SQLException {
         System.out.println("Preparing to buy...");
         int orderNumber = 0;
         int stockAccountID = 0;
@@ -156,21 +142,14 @@ public class traderInterface {
                 return;
             }
 
-            PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
-            updateMT.setInt(1, marketAccountID);
-            updateMT.setDate(2, currentDate);
-            updateMT.setInt(3, orderNumber+1);
-            updateMT.setString(4, "buy");
-            updateMT.setDouble(4, currentBalance - totalCost);
-            updateMT.executeQuery();
-            updateMT.close();
-
-            PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-            updateMadeMT.setInt(1, marketAccountID);
-            updateMadeMT.setDate(2, currentDate);
-            updateMadeMT.setInt(3, orderNumber);
-            updateMadeMT.executeQuery();
-            updateMadeMT.close();
+            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            insertMT.setInt(1, marketAccountID);
+            insertMT.setDate(2, currentDate);
+            insertMT.setInt(3, orderNumber+1);
+            insertMT.setString(4, "buy");
+            insertMT.setDouble(4, currentBalance - totalCost);
+            insertMT.executeQuery();
+            insertMT.close();
 
             //check if we need to create a new stock account
             queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ? AND stockSymbol = ?";
@@ -189,21 +168,21 @@ public class traderInterface {
                 }
                 getLast.close();
 
-                PreparedStatement updateOA = connection.prepareStatement("INSERT INTO OwnsAccount VALUES (?, ?, ?, ?)");
-                updateOA.setString(1, username);
-                updateOA.setInt(2, marketAccountID);
-                updateOA.setInt(3, stockAccountID+1);
-                updateOA.setString(4, "buy");
-                updateOA.executeQuery();
-                updateOA.close();
+                PreparedStatement insertOA = connection.prepareStatement("INSERT INTO OwnsAccount VALUES (?, ?, ?, ?)");
+                insertOA.setString(1, username);
+                insertOA.setInt(2, marketAccountID);
+                insertOA.setInt(3, stockAccountID+1);
+                insertOA.setString(4, "buy");
+                insertOA.executeQuery();
+                insertOA.close();
 
-                PreparedStatement updateSA = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
-                updateSA.setInt(1, stockAccountID+1);
-                updateSA.setString(2, stockSymbol);
-                updateSA.setDouble(3, currentPrice);
-                updateSA.setDouble(4, quantity);
-                updateSA.executeQuery();
-                updateSA.close();
+                PreparedStatement insertSA = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
+                insertSA.setInt(1, stockAccountID+1);
+                insertSA.setString(2, stockSymbol);
+                insertSA.setDouble(3, currentPrice);
+                insertSA.setDouble(4, quantity);
+                insertSA.executeQuery();
+                insertSA.close();
             } else {
                 stockAccountID = resultSet.getInt(1);
             }
@@ -222,13 +201,13 @@ public class traderInterface {
             getCurrentShares.close();
 
             if (currentShares == 0) {
-                PreparedStatement updateST = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
-                updateST.setInt(1, stockAccountID);
-                updateST.setString(2, stockSymbol);
-                updateST.setDouble(3, currentPrice);
-                updateST.setDouble(8, quantity);
-                updateST.executeQuery();
-                updateST.close();
+                PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
+                insertST.setInt(1, stockAccountID);
+                insertST.setString(2, stockSymbol);
+                insertST.setDouble(3, currentPrice);
+                insertST.setDouble(8, quantity);
+                insertST.executeQuery();
+                insertST.close();
             } else {
                 PreparedStatement updateST = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ?");
                 updateST.setDouble(1, quantity + currentShares);
@@ -238,25 +217,17 @@ public class traderInterface {
                 updateST.close();
             }
 
-            PreparedStatement updateST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            updateST.setInt(1, stockAccountID);
-            updateST.setString(2, stockSymbol);
-            updateST.setDouble(3, currentPrice);
-            updateST.setDate(4, currentDate);
-            updateST.setInt(5, orderNumber + 1);
-            updateST.setString(6, "buy");
-            updateST.setDouble(7, currentPrice);
-            updateST.setDouble(8, quantity);
-            updateST.executeQuery();
-            updateST.close();
-
-            PreparedStatement updateMadeST = connection.prepareStatement("INSERT INTO MadeST VALUES (?, ?, ?, ?)");
-            updateMadeST.setInt(1, stockAccountID);
-            updateMadeST.setString(2, stockSymbol);
-            updateMadeST.setDate(3, currentDate);
-            updateMadeST.setInt(4, orderNumber);
-            updateMadeST.executeQuery();
-            updateMadeST.close();
+            PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            insertST.setInt(1, stockAccountID);
+            insertST.setString(2, stockSymbol);
+            insertST.setDouble(3, currentPrice);
+            insertST.setDate(4, currentDate);
+            insertST.setInt(5, orderNumber + 1);
+            insertST.setString(6, "buy");
+            insertST.setDouble(7, currentPrice);
+            insertST.setDouble(8, quantity);
+            insertST.executeQuery();
+            insertST.close();
 
             connection.close();
         } catch (Exception e) {
@@ -265,7 +236,7 @@ public class traderInterface {
         }
     }
 
-    public void sell(Connection connection, double[] quantitiesSold, String stockSymbol, double[] buyPrices) {
+    public void sell(Connection connection, double[] quantitiesSold, String stockSymbol, double[] buyPrices) throws SQLException {
         System.out.println("Preparing to sell...");
         java.sql.Date currentDate = new java.sql.Date(0);
         int n = quantitiesSold.length;
@@ -346,62 +317,47 @@ public class traderInterface {
                 return;
             } 
 
-            PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?)");
-            updateMT.setInt(1, marketAccountID);
-            updateMT.setDate(2, currentDate);
-            updateMT.setInt(3, orderNumber + 1);
-            updateMT.setString(4, "sell");
-            updateMT.setDouble(5, currentBalance + revenue);
-            updateMT.executeQuery();
-            updateMT.close();
-
-            PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-            updateMadeMT.setInt(1, marketAccountID);
-            updateMadeMT.setDate(2, currentDate);
-            updateMadeMT.setInt(3, orderNumber);
-            updateMadeMT.executeQuery();
-            updateMadeMT.close();
+            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?)");
+            insertMT.setInt(1, marketAccountID);
+            insertMT.setDate(2, currentDate);
+            insertMT.setInt(3, orderNumber + 1);
+            insertMT.setString(4, "sell");
+            insertMT.setDouble(5, currentBalance + revenue);
+            insertMT.executeQuery();
+            insertMT.close();
 
             for (int i = 0; i < n; i++) {
-                PreparedStatement updateST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                updateST.setInt(1, stockAccountID);
-                updateST.setString(2, stockSymbol);
-                updateST.setDouble(3, buyPrices[i]);
-                updateST.setDate(4, currentDate);
-                updateST.setInt(5, orderNumber + 1);
-                updateST.setString(6, "sell");
-                updateST.setDouble(7, currentPrice);
-                updateST.setDouble(8, quantitiesSold[i]);
-                updateST.executeQuery();
-                updateST.close();
+                PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                insertST.setInt(1, stockAccountID);
+                insertST.setString(2, stockSymbol);
+                insertST.setDouble(3, buyPrices[i]);
+                insertST.setDate(4, currentDate);
+                insertST.setInt(5, orderNumber + 1);
+                insertST.setString(6, "sell");
+                insertST.setDouble(7, currentPrice);
+                insertST.setDouble(8, quantitiesSold[i]);
+                insertST.executeQuery();
+                insertST.close();
             }
-
-            PreparedStatement updateMadeST = connection.prepareStatement("INSERT INTO MadeST VALUES (?, ?, ?, ?)");
-            updateMadeST.setInt(1, stockAccountID);
-            updateMadeST.setString(2, stockSymbol);
-            updateMadeST.setDate(3, currentDate);
-            updateMadeST.setInt(4, orderNumber);
-            updateMadeST.executeQuery();
-            updateMadeST.close();
 
             for (int i = 0; i < n; i++) {
                 if (currentShares[i] == quantitiesSold[i]) {
                     //we are selling all of this stock, so we delete the row
-                    PreparedStatement updateStonk = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
-                    updateStonk.setInt(1, stockAccountID);
-                    updateStonk.setString(2, stockSymbol);
-                    updateStonk.setDouble(3, buyPrices[i]);
-                    updateStonk.executeQuery();
-                    updateStonk.close();
+                    PreparedStatement updateSA = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                    updateSA.setInt(1, stockAccountID);
+                    updateSA.setString(2, stockSymbol);
+                    updateSA.setDouble(3, buyPrices[i]);
+                    updateSA.executeQuery();
+                    updateSA.close();
                 } else {
                     //we are selling part of this stock, so we subtract from the quantity
-                    PreparedStatement updateStonk = connection.prepareStatement("UPDATE StonckAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
-                    updateStonk.setDouble(1, currentShares[i] - quantitiesSold[i]);
-                    updateStonk.setInt(2, stockAccountID);
-                    updateStonk.setString(3, stockSymbol);
-                    updateStonk.setDouble(4, buyPrices[i]);
-                    updateStonk.executeQuery();
-                    updateStonk.close();
+                    PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                    updateSA.setDouble(1, currentShares[i] - quantitiesSold[i]);
+                    updateSA.setInt(2, stockAccountID);
+                    updateSA.setString(3, stockSymbol);
+                    updateSA.setDouble(4, buyPrices[i]);
+                    updateSA.executeQuery();
+                    updateSA.close();
                 }
             }
 
@@ -412,8 +368,7 @@ public class traderInterface {
         }
     }
 
-    public void cancel(Connection connection) {
-        //We should only be able to cancel the most recent buy/sell transaction for the day
+    public void cancel(Connection connection) throws SQLException {
         System.out.println("Preparing to cancel...");
         java.sql.Date currentDate = new java.sql.Date(0);
         double currentBalance = 0;
@@ -442,17 +397,17 @@ public class traderInterface {
 
             //get the most recent buy/sell MarketTransaction
             queryString = "SELECT * FROM MarketTransaction WHERE marketAccountID = ? AND date = ? AND (transactionType = 'buy' OR transactionType = 'sell') ORDER BY orderNumber DESC";
-            PreparedStatement getMarketTransaction = connection.prepareStatement(queryString);
-            getMarketTransaction.setInt(1, marketAccountID);
-            getMarketTransaction.setDate(2, currentDate);
-            resultSet = getMarketTransaction.executeQuery();
+            PreparedStatement getMT = connection.prepareStatement(queryString);
+            getMT.setInt(1, marketAccountID);
+            getMT.setDate(2, currentDate);
+            resultSet = getMT.executeQuery();
             if (!resultSet.next()) {
                 System.out.println("ERROR: Cancel failed. There are no transactions to cancel.");
                 return;
             }
             cancelOrderNumber = resultSet.getInt(3);
             String cancelTransactionType = resultSet.getString(4);
-            getMarketTransaction.close();
+            getMT.close();
 
             //get number of different buy prices
             queryString = "SELECT COUNT(*) FROM StockTransaction WHERE orderNumber = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
@@ -466,10 +421,10 @@ public class traderInterface {
 
             //get the most recent buy/sell StockTransaction
             queryString = "SELECT * FROM StockTransaction WHERE orderNumber = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
-            PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
-            getStockTransaction.setInt(1, cancelOrderNumber);
-            getStockTransaction.setString(2, username);
-            resultSet = getStockTransaction.executeQuery();
+            PreparedStatement getST = connection.prepareStatement(queryString);
+            getST.setInt(1, cancelOrderNumber);
+            getST.setString(2, username);
+            resultSet = getST.executeQuery();
             int j = 0;
             int sid = 0;
             String stockSymbol = "";
@@ -484,7 +439,20 @@ public class traderInterface {
                 quantities[j] = resultSet.getDouble(8);
                 j++;
             }
-            getStockTransaction.close();
+            getST.close();
+
+            //delete the transactions
+            queryString = "DELETE FROM MarketTransaction WHERE marketAccountID = ? AND orderNumber = ?";
+            PreparedStatement deleteMT = connection.prepareStatement(queryString);
+            deleteMT.setInt(1, marketAccountID);
+            deleteMT.setInt(3, cancelOrderNumber);
+            resultSet = deleteMT.executeQuery();
+
+            queryString = "DELETE FROM StockTransaction WHERE stockAccountID = ? AND orderNumber = ?";
+            PreparedStatement deleteST = connection.prepareStatement(queryString);
+            deleteST.setInt(2, sid);
+            deleteST.setInt(1, cancelOrderNumber);
+            resultSet = deleteST.executeQuery();            
 
             if (cancelTransactionType == "buy") {
                 //cancel the last buy transaction
@@ -506,12 +474,12 @@ public class traderInterface {
                     getCurrentShares.close();
 
                     if (currentShares == quantities[i]) {
-                        PreparedStatement deleteST = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
-                        deleteST.setInt(1, sid);
-                        deleteST.setString(2, stockSymbol);
-                        deleteST.setDouble(3, buyPrices[i]);
-                        deleteST.executeQuery();
-                        deleteST.close();
+                        PreparedStatement deleteSA = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                        deleteSA.setInt(1, sid);
+                        deleteSA.setString(2, stockSymbol);
+                        deleteSA.setDouble(3, buyPrices[i]);
+                        deleteSA.executeQuery();
+                        deleteSA.close();
                     } else {
                         PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
                         updateSA.setDouble(1, currentShares - quantities[i]);
@@ -532,13 +500,6 @@ public class traderInterface {
                 updateMT.setDouble(5, currentBalance + payback);
                 updateMT.executeQuery();
                 updateMT.close();
-
-                PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-                updateMadeMT.setInt(1, marketAccountID);
-                updateMadeMT.setDate(2, currentDate);
-                updateMadeMT.setInt(3, cancelOrderNumber+1);
-                updateMadeMT.executeQuery();
-                updateMadeMT.close();
 
             } else if (cancelTransactionType == "sell") {
                 //cancel the last sell transaction
@@ -568,41 +529,34 @@ public class traderInterface {
 
                     if (currentShares == 0) {
                         //we need to put back the stocks as insertions since the trader doesn't have any
-                        PreparedStatement updateStonk = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
-                        updateStonk.setInt(1, sid);
-                        updateStonk.setString(2, stockSymbol);
-                        updateStonk.setDouble(3, buyPrices[i]);
-                        updateStonk.setDouble(4, quantities[i]);
-                        updateStonk.executeQuery();
-                        updateStonk.close();
+                        PreparedStatement insertSA = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
+                        insertSA.setInt(1, sid);
+                        insertSA.setString(2, stockSymbol);
+                        insertSA.setDouble(3, buyPrices[i]);
+                        insertSA.setDouble(4, quantities[i]);
+                        insertSA.executeQuery();
+                        insertSA.close();
                     } else {
                         //the trader has some of the stocks already so we add on to the existing row
-                        PreparedStatement updateStonk = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
-                        updateStonk.setDouble(1, currentShares + quantities[i]);
-                        updateStonk.setInt(2, sid);
-                        updateStonk.setString(3, stockSymbol);
-                        updateStonk.setDouble(4, buyPrices[i]);
-                        updateStonk.executeQuery();
-                        updateStonk.close();  
+                        PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                        updateSA.setDouble(1, currentShares + quantities[i]);
+                        updateSA.setInt(2, sid);
+                        updateSA.setString(3, stockSymbol);
+                        updateSA.setDouble(4, buyPrices[i]);
+                        updateSA.executeQuery();
+                        updateSA.close();  
                     }    
                 }    
 
                 //add the cancel transaction to the table
-                PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
-                updateMT.setInt(1, marketAccountID);
-                updateMT.setDate(2, currentDate);
-                updateMT.setInt(3, cancelOrderNumber+1);
-                updateMT.setString(4, "cancelSell");
-                updateMT.setDouble(5, currentBalance + loss);
-                updateMT.executeQuery();
-                updateMT.close();
-
-                PreparedStatement updateMadeMT = connection.prepareStatement("INSERT INTO MadeMT VALUES (?, ?, ?)");
-                updateMadeMT.setInt(1, marketAccountID);
-                updateMadeMT.setDate(2, currentDate);
-                updateMadeMT.setInt(3, cancelOrderNumber+1);
-                updateMadeMT.executeQuery();
-                updateMadeMT.close();
+                PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+                insertMT.setInt(1, marketAccountID);
+                insertMT.setDate(2, currentDate);
+                insertMT.setInt(3, cancelOrderNumber+1);
+                insertMT.setString(4, "cancelSell");
+                insertMT.setDouble(5, currentBalance + loss);
+                insertMT.executeQuery();
+                insertMT.close();
             }
         } catch (Exception e) {
             System.out.println("ERROR: Cancel failed.");
@@ -610,7 +564,7 @@ public class traderInterface {
         }
     }
 
-    public void showBalance(Connection connection) {
+    public void showBalance(Connection connection) throws SQLException {
         try {
             //get the trader's current balance
             double currentBalance = 0;
@@ -629,7 +583,7 @@ public class traderInterface {
         }
     }
 
-    public void showTransactionHistory(Connection connection, String stockSymbol) {
+    public void showTransactionHistory(Connection connection, String stockSymbol) throws SQLException {
         try {
             //get all StockTransactions
             String queryString = "SELECT * FROM StockTransaction WHERE stocksymbol = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
@@ -646,7 +600,7 @@ public class traderInterface {
                 String transactionType = resultSet.getString(6);
                 double sellPrice = resultSet.getDouble(7);
                 double quantity = resultSet.getDouble(8);
-
+                
                 System.out.println("Date: " + date + "; Transaction Type: " + transactionType + 
                 "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "") + "; Quantity: " + quantity);
             }
@@ -656,7 +610,7 @@ public class traderInterface {
         }
     }
 
-    public void getCurStockPriceAndStarProfile(Connection connection, String stockSymbol) {
+    public void getCurStockPriceAndStarProfile(Connection connection, String stockSymbol) throws SQLException {
         try {
             String queryString = "SELECT * FROM StarProfile AS S WHERE S.stockSymbol = ?";
             PreparedStatement getStockInfo = connection.prepareStatement(queryString);
@@ -692,7 +646,7 @@ public class traderInterface {
         }
     }
 
-    public void getTopMovies(Connection connection, int startDate, int stopDate) {
+    public void getTopMovies(Connection connection, int startDate, int stopDate) throws SQLException {
         try {
             String queryString = "SELECT M.title, M.productionYear FROM Movie AS M WHERE M.productionYear >= ? AND M.productionYear <= ? AND M.rating = 10";
             PreparedStatement getTopMovies = connection.prepareStatement(queryString);
@@ -712,7 +666,7 @@ public class traderInterface {
         }
     }
 
-    public void getReviews(Connection connection, String title, int productionYear) {
+    public void getReviews(Connection connection, String title, int productionYear) throws SQLException {
         try {
             String queryString = "SELECT review FROM Movie WHERE title = ? AND productionYear = ?";
             PreparedStatement getReviews = connection.prepareStatement(queryString);
