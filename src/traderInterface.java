@@ -1,7 +1,12 @@
 import java.sql.*;
 import java.util.*;
+import oracle.jdbc.pool.OracleDataSource;
+import oracle.jdbc.OracleConnection;
 
 public class traderInterface {
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
+    final static String DB_USER = "ADMIN";
+    final static String DB_PASSWORD = "Cookie12345+";
     String username;
     int marketAccountID;
 
@@ -547,7 +552,6 @@ public class traderInterface {
                         updateSA.close();  
                     }    
                 }    
-
                 //add the cancel transaction to the table
                 PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
                 insertMT.setInt(1, marketAccountID);
@@ -600,12 +604,33 @@ public class traderInterface {
                 String transactionType = resultSet.getString(6);
                 double sellPrice = resultSet.getDouble(7);
                 double quantity = resultSet.getDouble(8);
-                
                 System.out.println("Date: " + date + "; Transaction Type: " + transactionType + 
                 "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "") + "; Quantity: " + quantity);
             }
         } catch (Exception e) {
             System.out.println("ERROR: showTransactionHistory failed.");
+            System.out.println(e);
+        }
+    }
+
+    public void showStocks(Connection connection) throws SQLException {
+        try {
+            //get all stock accounts
+            String queryString = "SELECT * FROM StockAccount WHERE stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
+            PreparedStatement getSA = connection.prepareStatement(queryString);
+            getSA.setString(1, username);
+            ResultSet resultSet = getSA.executeQuery();
+            getSA.close();
+
+            System.out.println("Stocks you currently own: ");
+            while (resultSet.next()) {
+                String stockSymbol = resultSet.getString(2);
+                double buyPrice = resultSet.getDouble(3);
+                double quantity = resultSet.getDouble(4);
+                System.out.println("Stock Symbol: " + stockSymbol + "; Buy Price: " + buyPrice + "; Quantity: " + quantity);
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: showStocks failed.");
             System.out.println(e);
         }
     }
@@ -686,9 +711,129 @@ public class traderInterface {
         }
     }
 
-    public static void main(String args[]) {
-        Scanner input = new Scanner(System.in);
-        System.out.println("Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account.");
-        
+    public static void main(String args[]) throws SQLException {
+        Properties info = new Properties();
+
+        System.out.println("Initializing connection properties...");
+        info.put(OracleConnection.CONNECTION_PROPERTY_USER_NAME, DB_USER);
+        info.put(OracleConnection.CONNECTION_PROPERTY_PASSWORD, DB_PASSWORD);
+        info.put(OracleConnection.CONNECTION_PROPERTY_DEFAULT_ROW_PREFETCH, "20");
+
+        System.out.println("Creating OracleDataSource...");
+        OracleDataSource ods = new OracleDataSource();
+
+        System.out.println("Setting connection properties...");
+        ods.setURL(DB_URL);
+        ods.setConnectionProperties(info);
+
+        // With AutoCloseable, the connection is closed automatically
+        try (OracleConnection connection = (OracleConnection) ods.getConnection()) {
+            System.out.println("Connection established!\n");
+            Scanner input = new Scanner(System.in);
+            System.out.println("Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
+            String username = "";
+            String password = "";
+
+            if (input.nextInt() == 1) {
+                try {
+                    boolean userFound = false;
+                    while (!userFound) {
+                        System.out.print("Enter your username: ");
+                        username = input.nextLine();
+                        System.out.print("Enter your password: ");
+                        password = input.nextLine();
+                        String queryString = "SELECT * FROM UserProfile WHERE username = ? AND password = ?";
+                        PreparedStatement checkUser = connection.prepareStatement(queryString);
+                        checkUser.setString(1, username);
+                        checkUser.setString(2, password);
+                        ResultSet resultSet = checkUser.executeQuery();
+                        if (resultSet.next()) {
+                            userFound = true;
+                        } else {
+                            System.out.println("Username or password is incorrect. Try again.");
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("ERROR: checkUser failed.");
+                    System.out.println(e);
+                } 
+            } else {
+                System.out.print("Create a username: ");
+                username = input.nextLine();
+                System.out.print("Create a password: ");
+                password = input.nextLine();
+                System.out.print("Enter your Tax ID: ");
+                String taxID = input.nextLine();
+                System.out.print("Enter your full name: ");
+                String name = input.nextLine();
+                System.out.print("Enter the State that you live in: ");
+                String state = input.nextLine();
+                System.out.print("Enter your phone number: ");
+                String phoneNumber = input.nextLine();
+                System.out.print("Enter your email address: ");
+                String email = input.nextLine();
+
+                String queryString = "INSERT INTO UserProfile VALUES (?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement insertUser = connection.prepareStatement(queryString);
+                insertUser.setString(1, username);
+                insertUser.setString(2, password);
+                insertUser.setString(3, taxID);
+                insertUser.setString(4, name);
+                insertUser.setString(5, state);
+                insertUser.setString(6, phoneNumber);
+                insertUser.setString(7, email);
+                ResultSet resultSet = insertUser.executeQuery();   
+                
+                System.out.println("Account created successfully!");
+            }
+
+            boolean quit = false;
+            while (!quit) {
+                System.out.println("Enter one of the following number options to execute a command: ");
+                System.out.println("(1) Deposit funds");
+                System.out.println("(2) Withdraw funds");
+                System.out.println("(3) Buy stocks");
+                System.out.println("(4) Sell stocks");
+                System.out.println("(5) Cancel a transaction");
+                System.out.println("(6) Show your current Balance");
+                System.out.println("(7) Show your stock transaction history");
+                System.out.println("(8) Show your current stocks");
+                System.out.println("(9) List stock and Star profile info");
+                System.out.println("(10) Get top movies");
+                System.out.println("(11) Get movie reviews");
+                System.out.println("(12) Exit Trader Interface");
+                int option = input.nextInt();
+
+                switch(option) {
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                    case 5:
+                        break;
+                    case 6:
+                        break;
+                    case 7:
+                        break;
+                    case 8:
+                        break;
+                    case 9:
+                        break;
+                    case 10:
+                        break;
+                    case 11:
+                        break;
+                    case 12:
+                }
+            }
+            input.close();
+        } catch (Exception e) {
+            System.out.println("CONNECTION ERROR:");
+            System.out.println(e);
+        }
     }
 }
