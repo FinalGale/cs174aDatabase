@@ -5,7 +5,7 @@ import oracle.jdbc.OracleConnection;
 import oracle.jdbc.driver.parser.SqlEarley;
 
 public class managerInterface {
-    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/YamMaster909/Downloads/Wallet_projDB";
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
     final static String DB_PASSWORD = "Cookie12345+";
 
@@ -35,7 +35,7 @@ public class managerInterface {
 
     public static void genGovDTER(Connection connection) throws SQLException {
         try {
-            String queryString = "SELECT DISTINCT M.balance, M.marketAccountID FROM MarketTransaction AS M, OwnsAccount AS O WHERE O.username = ? ORDER BY M.orderNumber DESC";
+            String queryString = "SELECT S.quantity,S.sellPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' ORDER BY M.orderNumber DESC";
             PreparedStatement getAccountID = connection.prepareStatement(queryString);
             ResultSet resultSet = getAccountID.executeQuery();
             if (resultSet.next()) {
