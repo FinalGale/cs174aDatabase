@@ -96,7 +96,27 @@ public class managerInterface {
     }
 
     public static void deleteTransactions(Connection connection) throws SQLException {
+         try {
+            String queryString = "DELETE FROM StockTransaction";
+            PreparedStatement deleteST = connection.prepareStatement(queryString);
+            deleteST.executeQuery();
+            deleteST.close();
 
+            queryString = "DELETE FROM MarketTransaction M WHERE M.orderNumber < (SELECT MAX (M2.ordernumber) FROM MarketTransaction M2 WHERE M2.marketAccountID = M.marketAccountID)";
+            PreparedStatement deleteMT = connection.prepareStatement(queryString);
+            deleteMT.executeQuery();
+            deleteMT.close();
+            connection.close();
+            queryString = "UPDATE MarketPrice M SET M.transactDate = (SELECT T.currentDate FROM TimeInfo T)";
+            PreparedStatement updateDate = connection.prepareStatement(queryString);
+            updateDate.executeQuery();
+            updateDate.close();
+            connection.close();
+
+        } catch (Exception e) {
+            System.out.println("ERROR: deleteTransactions failed.");
+            System.out.println(e);
+        }
     }
 
     public static void main(String args[]) throws SQLException {
