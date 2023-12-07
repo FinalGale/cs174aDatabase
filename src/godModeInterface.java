@@ -17,7 +17,7 @@ public class godModeInterface {
         System.out.println("Opening market to date " + newDate);
         try {
             // change the date in date table
-            PreparedStatement updateDate = connection.prepareStatement("UPDATE CurrDate SET date = ?");
+            PreparedStatement updateDate = connection.prepareStatement("UPDATE TimeInfo SET currentDate = ?");
             updateDate.setDate(1, java.sql.Date.valueOf(newDate));
             updateDate.executeQuery();
             updateDate.close();
@@ -29,7 +29,20 @@ public class godModeInterface {
     }
 
     public static void closeMarket(Connection connection) throws SQLException {
-        // don't allow trading if the market is closed
+        // select from Star Profile the StockSymbol and CurrentPrice
+        // Update Closing Price table the stockSymbol, currDate, and currentPrice
+        System.out.println("Closing market");
+        try {
+            // change the date in date table
+            PreparedStatement setClosingPrice = connection.prepareStatement("UPDATE ClosingPrice C SET C.dailyClosingPrice FROM StarProfile S JOIN TimeInfo T ON S.stockSymbol = C.stockSymbol WHERE S.stockSymbol = C.stockSymbol AND T.currentDate = C.priceDate");
+            setClosingPrice.executeQuery();
+            setClosingPrice.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: Closing Market failed.");
+            System.out.println(e);
+        }
+        System.out.println("Market has been closed");
     }
 
     public static void setStockPrice(Connection connection, String stockType, String stockSymbol, double new_value) throws SQLException {
