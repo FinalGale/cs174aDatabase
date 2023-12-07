@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.*;
 import java.util.*;
 import oracle.jdbc.pool.OracleDataSource;
@@ -26,7 +28,6 @@ public class managerInterface {
                 System.out.println("Active Customer Username: " + resultSet.getString(1));
             }
             getUsername.close();
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: listActiveCustomers failed.");
             System.out.println(e);
@@ -50,10 +51,12 @@ public class managerInterface {
             resultSet = getStockSold.executeQuery();
             while (resultSet.next()) {
                 Double currentValue = counter.get(resultSet.getString("username"));
-                counter.put(resultSet.getString("username"), currentValue + ( (resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice"))) - (resultSet.getDouble("quantity") * resultSet.getDouble("buyPrice")) );
+                counter.put(resultSet.getString("username"),
+                        currentValue + ((resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice")))
+                                - (resultSet.getDouble("quantity") * resultSet.getDouble("buyPrice")));
             }
             getStockSold.close();
-            
+
             System.out.println("genGovDTER list: \n");
             for (Map.Entry<String, Double> entry : counter.entrySet()) {
                 // got to add interest here later
@@ -61,8 +64,6 @@ public class managerInterface {
                     System.out.println(entry.getKey());
                 }
             }
-
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: genGovDTER failed.");
             System.out.println(e);
@@ -94,7 +95,11 @@ public class managerInterface {
         }
     }
 
-    public static void main(String[] args) throws SQLException {
+    public static void deleteTransactions(Connection connection) throws SQLException {
+
+    }
+
+    public static void main(String args[]) throws SQLException {
         Properties info = new Properties();
 
         System.out.println("Initializing connection properties...");
@@ -112,13 +117,149 @@ public class managerInterface {
         // With AutoCloseable, the connection is closed automatically
         try (OracleConnection connection = (OracleConnection) ods.getConnection()) {
             System.out.println("Connection established!\n");
-            Scanner input = new Scanner(System.in);
+            BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
             System.out.println(
-                    "Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
+                    "Welcome to the Stars 'R' Us Manager Interace!\nEnter 1 to login, or 2 to create an account:");
             String username = "";
             String password = "";
-            int marketAccountID = 0;
 
+            if (Integer.parseInt(input.readLine()) == 1) {
+                boolean userFound = false;
+                while (!userFound) {
+                    System.out.print("Enter your username: ");
+                    username = input.readLine();
+                    System.out.print("Enter your password: ");
+                    password = input.readLine();
+                    String queryString = "SELECT * FROM UserProfile WHERE username = ? AND password = ?";
+                    PreparedStatement checkUser = connection.prepareStatement(queryString);
+                    checkUser.setString(1, username);
+                    checkUser.setString(2, password);
+                    ResultSet resultSet = checkUser.executeQuery();
+                    if (resultSet.next()) {
+                        userFound = true;
+                        System.out.println("Login successful!");
+                    } else {
+                        System.out.println("Username or password is incorrect. Try again.");
+                    }
+                    checkUser.close();
+                }
+
+            } else {
+                System.out.print("Create a username: ");
+                input.readLine();
+                username = input.readLine();
+                System.out.print("Create a password: ");
+                password = input.readLine();
+                System.out.print("Enter your Tax ID: ");
+                String taxID = input.readLine();
+                System.out.print("Enter your full name: ");
+                String name = input.readLine();
+                System.out.print("Enter the State that you live in: ");
+                String state = input.readLine();
+                System.out.print("Enter your phone number: ");
+                String phoneNumber = input.readLine();
+                System.out.print("Enter your email address: ");
+                String email = input.readLine();
+
+                // insert new user profile
+                String queryString = "INSERT INTO UserProfile VALUES (?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement insertUser = connection.prepareStatement(queryString);
+                insertUser.setString(1, username);
+                insertUser.setString(2, password);
+                insertUser.setString(3, taxID);
+                insertUser.setString(4, name);
+                insertUser.setString(5, state);
+                insertUser.setString(6, phoneNumber);
+                insertUser.setString(7, email);
+                insertUser.executeQuery();
+                System.out.println("Account created successfully!");
+            }
+
+            boolean quit = false;
+            while (!quit) {
+                System.out.println("Enter one of the following number options to execute a command: ");
+                System.out.println("(1) Add interest to all accounts");
+                System.out.println("(2) Generate monthly statement for a customer");
+                System.out.println("(3) List Active Customers");
+                System.out.println("(4) Generate Government Drug & Tax Evasion Report");
+                System.out.println("(5) ");
+                int option = Integer.parseInt(input.readLine());
+
+                switch (option) {
+                    case 1:
+                        System.out.print("Enter the amount to deposit: ");
+                        double depositAmount = Double.parseDouble(input.readLine());
+                        deposit(connection, depositAmount, marketAccountID);
+                        break;
+                    case 2:
+                        System.out.print("Enter the amount to withdraw: ");
+                        double withdrawAmount = Double.parseDouble(input.readLine());
+                        withdraw(connection, withdrawAmount, marketAccountID);
+                        break;
+                    case 3:
+                        System.out.print("Enter the symbol of the stock you are buying: ");
+                        String stockSymbolBuy = input.readLine();
+                        System.out.print("Enter the quantity you are buying: ");
+                        double quantityBuy = Double.parseDouble(input.readLine());
+                        buy(connection, quantityBuy, stockSymbolBuy, username, marketAccountID);
+                        break;
+                    case 4:
+                        System.out.print("Enter the symbol of the stock you are selling: ");
+                        String stockSymbolSell = input.readLine();
+                        boolean stopSell = false;
+                        ArrayList<Double> buyPrices = new ArrayList<Double>();
+                        ArrayList<Double> quantitiesSold = new ArrayList<Double>();
+                        while (!stopSell) {
+                            System.out.print(
+                                    "Enter a 'buy price' of the stock you are selling, or enter -1 if you are done: ");
+                            double bp = Double.parseDouble(input.readLine());
+                            if (bp == -1) {
+                                break;
+                            }
+                            buyPrices.add(bp);
+                            System.out.print("Enter the quantity you are selling: ");
+                            quantitiesSold.add(Double.parseDouble(input.readLine()));
+                        }
+                        sell(connection, quantitiesSold, stockSymbolSell, buyPrices, username, marketAccountID);
+                        break;
+                    case 5:
+                        cancel(connection, username, marketAccountID);
+                        break;
+                    case 6:
+                        showBalance(connection, marketAccountID);
+                        break;
+                    case 7:
+                        System.out.println("Enter the stock symbol of the account you want to view: ");
+                        showTransactionHistory(connection, username, input.readLine());
+                        break;
+                    case 8:
+                        showStocks(connection, username);
+                        break;
+                    case 9:
+                        System.out.println("Enter the stock symbol of the Star profile you want to view: ");
+                        getCurStockPriceAndStarProfile(connection, input.readLine());
+                        break;
+                    case 10:
+                        System.out.println("Enter the starting year for the search range: ");
+                        int startDate = Integer.parseInt(input.readLine());
+                        System.out.println("Enter the ending year for the search range: ");
+                        int stopDate = Integer.parseInt(input.readLine());
+                        getTopMovies(connection, startDate, stopDate);
+                        break;
+                    case 11:
+                        System.out.println("Enter the title of the movie: ");
+                        String title = input.readLine();
+                        System.out.println("Enter the production year of the movie: ");
+                        int productionYear = Integer.parseInt(input.readLine());
+                        getReviews(connection, title, productionYear);
+                        break;
+                    case 12:
+                        quit = true;
+                        connection.close();
+                        System.out.println("Thank you for using the Stars 'R' Us Trader Interface. Goodbye!");
+                }
+            }
+            input.close();
         } catch (Exception e) {
             System.out.println("CONNECTION ERROR:");
             System.out.println(e);
