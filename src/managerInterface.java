@@ -6,7 +6,7 @@ import oracle.jdbc.driver.parser.SqlEarley;
 
 
 public class managerInterface {
-    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/YamMaster909/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
     final static String DB_PASSWORD = "Cookie12345+";
 
@@ -14,7 +14,7 @@ public class managerInterface {
 
     }
 
-public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
+    public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
 
     }
 
