@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.*;
 import java.util.*;
 import oracle.jdbc.pool.OracleDataSource;
@@ -39,7 +41,7 @@ public class godModeInterface {
         System.out.println("Market has been closed");
     }
 
-    public static void setStockPrice(Connection connection, String stockType, String stockSymbol, double new_value)
+    public static void setStockPrice(Connection connection, String stockSymbol, double new_value)
             throws SQLException {
         // search by stock symbol in star profile or signed contract table
         // then look at current price or total value and change it to new input value
@@ -83,10 +85,40 @@ public class godModeInterface {
         // With AutoCloseable, the connection is closed automatically
         try (OracleConnection connection = (OracleConnection) ods.getConnection()) {
             System.out.println("Connection established!\n");
-            Scanner input = new Scanner(System.in);
-            System.out.println(
-                    "Welcome to the God Mode Interace!\nWhat would you like your world to be?");
+            BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+            System.out.println("Welcome to the GOD Mode Interace!\nWhat would you like your world to be?");
+            boolean quit = false;
+            while (!quit) {
+                System.out.println("Enter one of the following number options to execute a GOD command: ");
+                System.out.println("(1) Open Market");
+                System.out.println("(2) Close Market");
+                System.out.println("(3) SetStockPrice");
+                System.out.println("(4) Exit");
+                int option = Integer.parseInt(input.readLine());
 
+                switch (option) {
+                    case 1:
+                        System.out.print("Enter new date to open market on: ");
+                        String newDate = input.readLine();
+                        openMarket(connection, newDate);
+                        break;
+                    case 2:
+                        closeMarket(connection);
+                        break;
+                    case 3:
+                        System.out.print("Enter the symbol of the stock you want to change: ");
+                        String stockSymbol = input.readLine();
+                        System.out.print("Enter the new price value for the stock: ");
+                        double newValue = Double.parseDouble(input.readLine());
+                        setStockPrice(connection, stockSymbol, newValue);
+                        break;
+                    case 4:
+                        quit = true;
+                        connection.close();
+                        System.out.println("Thank you GOD for creating the world! Amen 🙏");
+                }
+            }
+            input.close();
         } catch (Exception e) {
             System.out.println("CONNECTION ERROR:");
             System.out.println(e);
