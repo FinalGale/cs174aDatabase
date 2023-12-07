@@ -32,8 +32,30 @@ public class godModeInterface {
         // don't allow trading if the market is closed
     }
 
-    public static void setStockPrice(Connection connection) throws SQLException {
-
+    public static void setStockPrice(Connection connection, String stockType, String stockSymbol, double new_value) throws SQLException {
+        // search by stock symbol in star profile or signed contract table
+        // then look at current price or total value and change it to new input value
+        System.out.println("Setting new stock price");
+        try {
+            if (stockType == "star profile") {
+                PreparedStatement updateStock = connection.prepareStatement("UPDATE StarProfile SET currentPrice = ? WHERE stockSymbol = ?");
+                updateStock.setDouble(1, new_value);
+                updateStock.setString(2, stockSymbol);
+                updateStock.executeQuery();
+                updateStock.close();
+            } else {
+                PreparedStatement updateStock = connection.prepareStatement("UPDATE SignedContract SET totalValue = ? WHERE stockSymbol = ?");
+                updateStock.setDouble(1, new_value);
+                updateStock.setString(2, stockSymbol);
+                updateStock.executeQuery();
+                updateStock.close();
+            }
+            connection.close();
+            System.out.println("Update to Stock Price completed");
+        } catch (Exception e) {
+            System.out.println("ERROR: setStockPrice failed.");
+            System.out.println(e);
+        }
     }
 
     public static void main(String[] args) throws SQLException {
