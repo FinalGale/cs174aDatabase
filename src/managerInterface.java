@@ -4,7 +4,6 @@ import oracle.jdbc.pool.OracleDataSource;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.driver.parser.SqlEarley;
 
-
 public class managerInterface {
     final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
@@ -14,20 +13,74 @@ public class managerInterface {
 
     }
 
-public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
+    public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
 
     }
 
-    public static void listActiveCustomers(Connection Connection) throws SQLException {
-
+    public static void listActiveCustomers(Connection connection) throws SQLException {
+        try {
+            String queryString = "SELECT U.username FROM UserProfile AS U GROUP BY U.username HAVING 1000 <= SUM (shares) FROM (SELECT quantity AS shares FROM StockTransaction WHERE stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username)";
+            PreparedStatement getUsername = connection.prepareStatement(queryString);
+            ResultSet resultSet = getUsername.executeQuery();
+            while (resultSet.next()) {
+                System.out.println("Active Customer Username: " + resultSet.getString(1));
+            }
+            getUsername.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: listActiveCustomers failed.");
+            System.out.println(e);
+        }
     }
 
     public static void genGovDTER(Connection connection) throws SQLException {
+        try {
+            String queryString = "SELECT DISTINCT M.balance, M.marketAccountID FROM MarketTransaction AS M, OwnsAccount AS O WHERE O.username = ? ORDER BY M.orderNumber DESC";
+            PreparedStatement getAccountID = connection.prepareStatement(queryString);
+            ResultSet resultSet = getAccountID.executeQuery();
+            if (resultSet.next()) {
+                System.out.println("Market Account ID: " + resultSet.getDouble("marketAccountID")
+                        + "\nCurrent Balance: " + resultSet.getInt("balance"));
+            }
+            getAccountID.close();
 
+            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE O.username = ?";
+            PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
+            resultSet = getStockAccountID.executeQuery();
+            while (resultSet.next()) {
+                System.out.println("Stock Account ID: " + resultSet.getInt(1));
+            }
+            getStockAccountID.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: genGovDTER failed.");
+            System.out.println(e);
+        }
     }
 
     public static void genCustomerReport(Connection connection, String customerUsername) throws SQLException {
+        try {
+            String queryString = "SELECT DISTINCT M.balance, M.marketAccountID FROM MarketTransaction AS M, OwnsAccount AS O WHERE O.username = ? ORDER BY M.orderNumber DESC";
+            PreparedStatement getAccountID = connection.prepareStatement(queryString);
+            ResultSet resultSet = getAccountID.executeQuery();
+            if (resultSet.next()) {
+                System.out.println("Market Account ID: " + resultSet.getDouble("marketAccountID")
+                        + "\nCurrent Balance: " + resultSet.getInt("balance"));
+            }
+            getAccountID.close();
 
+            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE O.username = ?";
+            PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
+            resultSet = getStockAccountID.executeQuery();
+            while (resultSet.next()) {
+                System.out.println("Stock Account ID: " + resultSet.getInt(1));
+            }
+            getStockAccountID.close();
+            connection.close();
+        } catch (Exception e) {
+            System.out.println("ERROR: genCustomerReport failed.");
+            System.out.println(e);
+        }
     }
 
     public static void deleteTransactions(Connection connection) throws SQLException {
@@ -76,7 +129,8 @@ public static void genMonthlyStatement(Connection connection, String customerUse
         try (OracleConnection connection = (OracleConnection) ods.getConnection()) {
             System.out.println("Connection established!\n");
             Scanner input = new Scanner(System.in);
-            System.out.println("Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
+            System.out.println(
+                    "Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
             String username = "";
             String password = "";
             int marketAccountID = 0;
