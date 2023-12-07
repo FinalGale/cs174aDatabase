@@ -99,7 +99,64 @@ public class managerInterface {
     }
 
     public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
+        try {
+            String queryString = "SELECT name, emailAddress FROM UserProfile WHERE username = ?";
+            PreparedStatement getPersonal = connection.prepareStatement(queryString);
+            getPersonal.setString(1, customerUsername);
+            ResultSet resultSet = getPersonal.executeQuery();
+            String name = "";
+            String email = "";
+            double totalCommisions = 0;
+            if (resultSet.next()) {
+                name = resultSet.getString(1);
+                email = resultSet.getString(2);
+            }
+            getPersonal.close();
 
+            // get all StockTransactions
+            queryString = "SELECT * FROM MarketTransaction WHERE marketAccountID IN (SELECT marketAccountID FROM OwnsAccount WHERE username = ?)";
+            PreparedStatement getMT = connection.prepareStatement(queryString);
+            getMT.setString(1, customerUsername);
+            resultSet = getMT.executeQuery();
+            getMT.close();
+
+            System.out.println("Customer name: " + name);
+            System.out.println("Customer email: " + email);
+            System.out.println("Transactions this month: ");
+            while (resultSet.next()) {
+                java.sql.Date date = resultSet.getDate(2);
+                int orderNumber = resultSet.getInt(3);
+                String transactionType = resultSet.getString(4);
+                double balance = resultSet.getDouble(5);
+                if (transactionType.equals("buy") || transactionType.equals("sell")) {
+                    totalCommisions += 20;
+                } else if (transactionType.equals("cancel")) {
+                    totalCommisions += 40;
+                }
+
+                System.out.println(
+                        "Date: " + date + ";Order number: " + orderNumber + "; Transaction Type: " + transactionType +
+                                "; Balance: " + balance);
+            }
+
+            // get total earnings/losses
+            double totalEarnings = 0;
+            queryString = "SELECT quantity, sellPrice, buyPrice FROM StockTransaction WHERE stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
+            PreparedStatement getStockSold = connection.prepareStatement(queryString);
+            getStockSold.setString(1, customerUsername);
+            resultSet = getStockSold.executeQuery();
+            while (resultSet.next()) {
+                totalEarnings += resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice")
+                        - resultSet.getDouble("quantity") * resultSet.getDouble("buyPrice");
+            }
+            getStockSold.close();
+
+            System.out.println("Total earnings/losses this month: " + totalEarnings + " USD");
+            System.out.println("Total commisions paid this month: " + totalCommisions + " USD");
+        } catch (Exception e) {
+            System.out.println("ERROR: showTransactionHistory failed.");
+            System.out.println(e);
+        }
     }
 
     public static void listActiveCustomers(Connection connection) throws SQLException {
