@@ -417,7 +417,7 @@ public class traderInterface {
             getBalance.close();
 
             // get the most recent buy/sell MarketTransaction
-            queryString = "SELECT * FROM MarketTransaction WHERE marketAccountID = ? AND date = ? AND (transactionType = 'buy' OR transactionType = 'sell') ORDER BY orderNumber DESC";
+            queryString = "SELECT * FROM MarketTransaction WHERE marketAccountID = ? AND transactDate = ? AND (transactionType = 'buy' OR transactionType = 'sell') ORDER BY orderNumber DESC";
             PreparedStatement getMT = connection.prepareStatement(queryString);
             getMT.setInt(1, marketAccountID);
             getMT.setDate(2, currentDate);
@@ -466,16 +466,16 @@ public class traderInterface {
             queryString = "DELETE FROM MarketTransaction WHERE marketAccountID = ? AND orderNumber = ?";
             PreparedStatement deleteMT = connection.prepareStatement(queryString);
             deleteMT.setInt(1, marketAccountID);
-            deleteMT.setInt(3, cancelOrderNumber);
+            deleteMT.setInt(2, cancelOrderNumber);
             resultSet = deleteMT.executeQuery();
 
             queryString = "DELETE FROM StockTransaction WHERE stockAccountID = ? AND orderNumber = ?";
             PreparedStatement deleteST = connection.prepareStatement(queryString);
-            deleteST.setInt(2, sid);
-            deleteST.setInt(1, cancelOrderNumber);
+            deleteST.setInt(1, sid);
+            deleteST.setInt(2, cancelOrderNumber);
             resultSet = deleteST.executeQuery();
 
-            if (cancelTransactionType == "buy") {
+            if (cancelTransactionType.equals("buy")) {
                 // cancel the last buy transaction
                 double payback = buyPrices[0] * quantities[0] - 20;
                 if (currentBalance + payback < 0) {
@@ -491,7 +491,10 @@ public class traderInterface {
                     getCurrentShares.setString(2, stockSymbol);
                     getCurrentShares.setDouble(3, buyPrices[i]);
                     resultSet = getCurrentShares.executeQuery();
-                    double currentShares = resultSet.getDouble(1);
+                    double currentShares = 0;
+                    if (resultSet.next()) {
+                        currentShares = resultSet.getDouble(1);
+                    }
                     getCurrentShares.close();
 
                     if (currentShares == quantities[i]) {
@@ -525,7 +528,7 @@ public class traderInterface {
                 updateMT.executeQuery();
                 updateMT.close();
 
-            } else if (cancelTransactionType == "sell") {
+            } else if (cancelTransactionType.equals("sell")) {
                 // cancel the last sell transaction
                 double loss = -20;
                 for (int i = 0; i < n; i++) {
@@ -584,9 +587,8 @@ public class traderInterface {
                 insertMT.setDouble(5, currentBalance + loss);
                 insertMT.executeQuery();
                 insertMT.close();
-
-                System.out.println("Cancel Successful.");
             }
+            System.out.println("Cancel Successful.");
         } catch (Exception e) {
             System.out.println("ERROR: Cancel failed.");
             System.out.println(e);
@@ -857,6 +859,7 @@ public class traderInterface {
 
             boolean quit = false;
             while (!quit) {
+                System.out.println("mID: " + marketAccountID);
                 System.out.println("Enter one of the following number options to execute a command: ");
                 System.out.println("(1) Deposit funds");
                 System.out.println("(2) Withdraw funds");
