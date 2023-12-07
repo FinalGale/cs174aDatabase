@@ -45,12 +45,12 @@ public class managerInterface {
             }
             getUsername.close();
 
-            queryString = "SELECT S.quantity,S.sellPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' AND S.stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username) GROUP BY U.username, S.quantity, S.sellPrice";
+            queryString = "SELECT S.quantity, S.sellPrice, S.buyPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' AND S.stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username) GROUP BY U.username, S.quantity, S.sellPrice, S.buyPrice";
             PreparedStatement getStockSold = connection.prepareStatement(queryString);
             resultSet = getStockSold.executeQuery();
             while (resultSet.next()) {
                 Double currentValue = counter.get(resultSet.getString("username"));
-                counter.put(resultSet.getString("username"), currentValue + (resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice")));
+                counter.put(resultSet.getString("username"), currentValue + ( (resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice"))) - (resultSet.getDouble("quantity") * resultSet.getDouble("buyPrice")) );
             }
             getStockSold.close();
             
