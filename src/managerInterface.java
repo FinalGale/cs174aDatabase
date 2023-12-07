@@ -12,7 +12,90 @@ public class managerInterface {
     final static String DB_PASSWORD = "Cookie12345+";
 
     public static void addInterest(Connection connection, double monthlyInterestRate) throws SQLException {
+        System.out.println("Preparing to add interest...");
+        java.sql.Date currentDate = new java.sql.Date(0);
 
+        try {
+            // get the current date
+            String queryString = "SELECT currentDate FROM TimeInfo";
+            PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
+            ResultSet resultSet = getCurrentDate.executeQuery();
+            if (resultSet.next()) {
+                currentDate = resultSet.getDate(1);
+            }
+            getCurrentDate.close();
+
+            ArrayList<Integer> mid = new ArrayList<Integer>();
+            queryString = "SELECT * FROM MarketAccount";
+            Statement getMID = connection.createStatement();
+            resultSet = getMID.executeQuery(queryString);
+            while (resultSet.next()) {
+                mid.add(resultSet.getInt(1));
+            }
+
+            for (int m : mid) {
+                ArrayList<Integer> days = new ArrayList<Integer>();
+                ArrayList<Double> balances = new ArrayList<Double>();
+
+                queryString = "SELECT M.transactDate, MAX(M.orderNumber) FROM MarketTransaction M WHERE M.marketAccountID = ?"
+                        +
+                        " GROUP BY M.transactDate ORDER BY M.transactDate";
+                PreparedStatement getON = connection.prepareStatement(queryString);
+                getON.setInt(1, m);
+                resultSet = getON.executeQuery();
+                while (resultSet.next()) {
+                    java.sql.Date curDate = resultSet.getDate(1);
+                    int curON = resultSet.getInt(2);
+
+                    String q = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? AND transactDate = ? AND orderNumber = ?";
+                    PreparedStatement getBalances = connection.prepareStatement(q);
+                    getBalances.setInt(1, m);
+                    getBalances.setDate(2, curDate);
+                    getBalances.setInt(3, curON);
+                    ResultSet r = getBalances.executeQuery();
+                    if (r.next()) {
+                        balances.add(r.getDouble(1));
+                    }
+                    days.add(curDate.toLocalDate().getDayOfMonth());
+                }
+
+                // get the trader's current balance and order number
+                queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
+                PreparedStatement getBalance = connection.prepareStatement(queryString);
+                getBalance.setInt(1, m);
+                resultSet = getBalance.executeQuery();
+                double currentBalance = 0;
+                int orderNumber = 0;
+                if (resultSet.next()) {
+                    currentBalance = resultSet.getDouble(1);
+                    orderNumber = resultSet.getInt(2);
+                }
+                getBalance.close();
+                days.add(currentDate.toLocalDate().getDayOfMonth() + 1);
+                balances.add(currentBalance);
+
+                double sum = 0;
+                for (int i = 0; i < days.size() - 1; i++) {
+                    sum += balances.get(i) * (days.get(i + 1) - days.get(i));
+                }
+
+                sum /= (days.get(days.size() - 1) - days.get(0));
+                double accrueAmount = sum * monthlyInterestRate;
+
+                PreparedStatement insertMT = connection
+                        .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+                insertMT.setInt(1, m);
+                insertMT.setDate(2, currentDate);
+                insertMT.setInt(3, orderNumber + 1);
+                insertMT.setString(4, "accrue-interest");
+                insertMT.setDouble(5, accrueAmount);
+                insertMT.executeQuery();
+                insertMT.close();
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: Deposit failed.");
+            System.out.println(e);
+        }
     }
 
     public static void genMonthlyStatement(Connection connection, String customerUsername) throws SQLException {
@@ -182,7 +265,8 @@ public class managerInterface {
                 System.out.println("(2) Generate monthly statement for a customer");
                 System.out.println("(3) List Active Customers");
                 System.out.println("(4) Generate Government Drug & Tax Evasion Report");
-                System.out.println("(5) ");
+                System.out.println("(5) Generate Customer Report");
+                System.out.println("(6) Delete All Transactions");
                 int option = Integer.parseInt(input.readLine());
 
                 switch (option) {
@@ -229,37 +313,12 @@ public class managerInterface {
                         showBalance(connection, marketAccountID);
                         break;
                     case 7:
-                        System.out.println("Enter the stock symbol of the account you want to view: ");
-                        showTransactionHistory(connection, username, input.readLine());
-                        break;
-                    case 8:
-                        showStocks(connection, username);
-                        break;
-                    case 9:
-                        System.out.println("Enter the stock symbol of the Star profile you want to view: ");
-                        getCurStockPriceAndStarProfile(connection, input.readLine());
-                        break;
-                    case 10:
-                        System.out.println("Enter the starting year for the search range: ");
-                        int startDate = Integer.parseInt(input.readLine());
-                        System.out.println("Enter the ending year for the search range: ");
-                        int stopDate = Integer.parseInt(input.readLine());
-                        getTopMovies(connection, startDate, stopDate);
-                        break;
-                    case 11:
-                        System.out.println("Enter the title of the movie: ");
-                        String title = input.readLine();
-                        System.out.println("Enter the production year of the movie: ");
-                        int productionYear = Integer.parseInt(input.readLine());
-                        getReviews(connection, title, productionYear);
-                        break;
-                    case 12:
                         quit = true;
                         connection.close();
-                        System.out.println("Thank you for using the Stars 'R' Us Trader Interface. Goodbye!");
+                        input.close();
+                        System.out.println("Thank you for using the Stars 'R' Us Manager Interface. Goodbye!");
                 }
             }
-            input.close();
         } catch (Exception e) {
             System.out.println("CONNECTION ERROR:");
             System.out.println(e);

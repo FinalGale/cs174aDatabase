@@ -945,10 +945,10 @@ public class traderInterface {
                     case 12:
                         quit = true;
                         connection.close();
+                        input.close();
                         System.out.println("Thank you for using the Stars 'R' Us Trader Interface. Goodbye!");
                 }
             }
-            input.close();
         } catch (Exception e) {
             System.out.println("CONNECTION ERROR:");
             System.out.println(e);
