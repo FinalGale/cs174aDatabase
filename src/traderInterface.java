@@ -316,7 +316,7 @@ public class traderInterface {
             //ensure that the balance won't go negative after selling
             double revenue = -20;
             for (int i = 0; i < n; i++) {
-                revenue += quantitiesSold[i] * currentPrice;
+                revenue += quantitiesSold.get(i) * currentPrice;
             }
             if (currentBalance + revenue < 0) {
                 System.out.println("ERROR: Sell failed. Your account lacks sufficient funds.");
