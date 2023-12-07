@@ -35,22 +35,32 @@ public class managerInterface {
 
     public static void genGovDTER(Connection connection) throws SQLException {
         try {
-            String queryString = "SELECT S.quantity,S.sellPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' ORDER BY M.orderNumber DESC";
-            PreparedStatement getAccountID = connection.prepareStatement(queryString);
-            ResultSet resultSet = getAccountID.executeQuery();
-            if (resultSet.next()) {
-                System.out.println("Market Account ID: " + resultSet.getDouble("marketAccountID")
-                        + "\nCurrent Balance: " + resultSet.getInt("balance"));
-            }
-            getAccountID.close();
+            Map<String, Double> counter = new HashMap<>();
 
-            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE O.username = ?";
-            PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
-            resultSet = getStockAccountID.executeQuery();
+            String queryString = "SELECT username FROM UserProfile";
+            PreparedStatement getUsername = connection.prepareStatement(queryString);
+            ResultSet resultSet = getUsername.executeQuery();
             while (resultSet.next()) {
-                System.out.println("Stock Account ID: " + resultSet.getInt(1));
+                counter.put(resultSet.getString(1), 0.0);
             }
-            getStockAccountID.close();
+            getUsername.close();
+
+            queryString = "SELECT S.quantity,S.sellPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' AND S.stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username) GROUP BY U.username, S.quantity, S.sellPrice";
+            PreparedStatement getStockSold = connection.prepareStatement(queryString);
+            resultSet = getStockSold.executeQuery();
+            while (resultSet.next()) {
+                Double currentValue = counter.get(resultSet.getString("username"));
+                counter.put(resultSet.getString("username"), currentValue + (resultSet.getDouble("quantity") * resultSet.getDouble("sellPrice")));
+            }
+            getStockSold.close();
+            
+            System.out.println("genGovDTER list: \n");
+            for (Map.Entry<String, Double> entry : counter.entrySet()) {
+                if (entry.getValue() > 10000) {
+                    System.out.println(entry.getKey());
+                }
+            }
+
             connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: genGovDTER failed.");
