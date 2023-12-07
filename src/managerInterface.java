@@ -112,7 +112,7 @@ public class managerInterface {
             updateDate.executeQuery();
             updateDate.close();
             connection.close();
-
+            System.out.println("deleted transactions");
         } catch (Exception e) {
             System.out.println("ERROR: deleteTransactions failed.");
             System.out.println(e);
@@ -202,81 +202,40 @@ public class managerInterface {
                 System.out.println("(2) Generate monthly statement for a customer");
                 System.out.println("(3) List Active Customers");
                 System.out.println("(4) Generate Government Drug & Tax Evasion Report");
-                System.out.println("(5) ");
+                System.out.println("(5) Generate Customer Report");
+                System.out.println("(6) Delete Transactions");
+                System.out.println("(7) Exit");
                 int option = Integer.parseInt(input.readLine());
 
                 switch (option) {
                     case 1:
-                        System.out.print("Enter the amount to deposit: ");
-                        double depositAmount = Double.parseDouble(input.readLine());
-                        deposit(connection, depositAmount, marketAccountID);
+                        System.out.print("Enter the monthly interest rate: ");
+                        double monthIR = Double.parseDouble(input.readLine());
+                        addInterest(connection, monthIR);
                         break;
                     case 2:
-                        System.out.print("Enter the amount to withdraw: ");
-                        double withdrawAmount = Double.parseDouble(input.readLine());
-                        withdraw(connection, withdrawAmount, marketAccountID);
+                        System.out.print("Enter customer username: ");
+                        String customerUsername = input.readLine();
+                        genMonthlyStatement(connection, customerUsername);
                         break;
                     case 3:
-                        System.out.print("Enter the symbol of the stock you are buying: ");
-                        String stockSymbolBuy = input.readLine();
-                        System.out.print("Enter the quantity you are buying: ");
-                        double quantityBuy = Double.parseDouble(input.readLine());
-                        buy(connection, quantityBuy, stockSymbolBuy, username, marketAccountID);
+                        listActiveCustomers(connection);
                         break;
                     case 4:
-                        System.out.print("Enter the symbol of the stock you are selling: ");
-                        String stockSymbolSell = input.readLine();
-                        boolean stopSell = false;
-                        ArrayList<Double> buyPrices = new ArrayList<Double>();
-                        ArrayList<Double> quantitiesSold = new ArrayList<Double>();
-                        while (!stopSell) {
-                            System.out.print(
-                                    "Enter a 'buy price' of the stock you are selling, or enter -1 if you are done: ");
-                            double bp = Double.parseDouble(input.readLine());
-                            if (bp == -1) {
-                                break;
-                            }
-                            buyPrices.add(bp);
-                            System.out.print("Enter the quantity you are selling: ");
-                            quantitiesSold.add(Double.parseDouble(input.readLine()));
-                        }
-                        sell(connection, quantitiesSold, stockSymbolSell, buyPrices, username, marketAccountID);
+                        genGovDTER(connection);
                         break;
                     case 5:
-                        cancel(connection, username, marketAccountID);
+                        System.out.print("Enter customer username: ");
+                        String custUser = input.readLine();
+                        genCustomerReport(connection, custUser);
                         break;
                     case 6:
-                        showBalance(connection, marketAccountID);
+                        deleteTransactions(connection);
                         break;
                     case 7:
-                        System.out.println("Enter the stock symbol of the account you want to view: ");
-                        showTransactionHistory(connection, username, input.readLine());
-                        break;
-                    case 8:
-                        showStocks(connection, username);
-                        break;
-                    case 9:
-                        System.out.println("Enter the stock symbol of the Star profile you want to view: ");
-                        getCurStockPriceAndStarProfile(connection, input.readLine());
-                        break;
-                    case 10:
-                        System.out.println("Enter the starting year for the search range: ");
-                        int startDate = Integer.parseInt(input.readLine());
-                        System.out.println("Enter the ending year for the search range: ");
-                        int stopDate = Integer.parseInt(input.readLine());
-                        getTopMovies(connection, startDate, stopDate);
-                        break;
-                    case 11:
-                        System.out.println("Enter the title of the movie: ");
-                        String title = input.readLine();
-                        System.out.println("Enter the production year of the movie: ");
-                        int productionYear = Integer.parseInt(input.readLine());
-                        getReviews(connection, title, productionYear);
-                        break;
-                    case 12:
                         quit = true;
                         connection.close();
-                        System.out.println("Thank you for using the Stars 'R' Us Trader Interface. Goodbye!");
+                        System.out.println("Thank you for using the Stars 'R' Us Manager Interface. Goodbye!");
                 }
             }
             input.close();
