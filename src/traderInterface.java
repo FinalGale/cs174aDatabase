@@ -623,7 +623,6 @@ public class traderInterface {
             getStockTransaction.setString(1, stockSymbol);
             getStockTransaction.setString(2, username);
             ResultSet resultSet = getStockTransaction.executeQuery();
-            getStockTransaction.close();
 
             System.out.println("Your transactions this month for " + stockSymbol + ": ");
             while (resultSet.next()) {
@@ -636,6 +635,7 @@ public class traderInterface {
                         "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "")
                         + "; Quantity: " + quantity);
             }
+            getStockTransaction.close();
         } catch (Exception e) {
             System.out.println("ERROR: showTransactionHistory failed.");
             System.out.println(e);
@@ -802,7 +802,6 @@ public class traderInterface {
                 }
             } else {
                 System.out.print("Create a username: ");
-                input.readLine();
                 username = input.readLine();
                 System.out.print("Create a password: ");
                 password = input.readLine();
