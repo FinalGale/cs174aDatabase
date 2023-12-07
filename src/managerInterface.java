@@ -88,7 +88,7 @@ public class managerInterface {
                 insertMT.setDate(2, currentDate);
                 insertMT.setInt(3, orderNumber + 1);
                 insertMT.setString(4, "accrue-interest");
-                insertMT.setDouble(5, accrueAmount);
+                insertMT.setDouble(5, currentBalance + accrueAmount);
                 insertMT.executeQuery();
                 insertMT.close();
             }
@@ -118,7 +118,6 @@ public class managerInterface {
             PreparedStatement getMT = connection.prepareStatement(queryString);
             getMT.setString(1, customerUsername);
             resultSet = getMT.executeQuery();
-            getMT.close();
 
             System.out.println("Customer name: " + name);
             System.out.println("Customer email: " + email);
@@ -138,6 +137,7 @@ public class managerInterface {
                         "Date: " + date + ";Order number: " + orderNumber + "; Transaction Type: " + transactionType +
                                 "; Balance: " + balance);
             }
+            getMT.close();
 
             // get total earnings/losses
             double totalEarnings = 0;
@@ -154,14 +154,15 @@ public class managerInterface {
             System.out.println("Total earnings/losses this month: " + totalEarnings + " USD");
             System.out.println("Total commisions paid this month: " + totalCommisions + " USD");
         } catch (Exception e) {
-            System.out.println("ERROR: showTransactionHistory failed.");
+            System.out.println("ERROR: genMonthlyStatement failed.");
             System.out.println(e);
         }
     }
 
     public static void listActiveCustomers(Connection connection) throws SQLException {
         try {
-            String queryString = "SELECT U.username FROM UserProfile AS U GROUP BY U.username HAVING 1000 <= SUM (shares) FROM (SELECT quantity AS shares FROM StockTransaction WHERE stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username)";
+            String queryString = "SELECT U.username FROM UserProfile U GROUP BY U.username" +
+                    " HAVING 1000 <= (SELECT SUM(quantity) FROM StockTransaction WHERE stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount O WHERE O.username = U.username))";
             PreparedStatement getUsername = connection.prepareStatement(queryString);
             ResultSet resultSet = getUsername.executeQuery();
             while (resultSet.next()) {
@@ -186,7 +187,10 @@ public class managerInterface {
             }
             getUsername.close();
 
-            queryString = "SELECT S.quantity, S.sellPrice, S.buyPrice FROM StockTransaction AS S, UserProfile AS U WHERE S.transactionType = 'sell' AND S.stockAccountID IN (SELECT O.stockAccountID FROM OwnsAccount AS O WHERE O.username = U.username) GROUP BY U.username, S.quantity, S.sellPrice, S.buyPrice";
+            queryString = "SELECT U.username, S.quantity, S.sellPrice, S.buyPrice" +
+                    " FROM StockTransaction S, UserProfile U" +
+                    " WHERE S.transactionType = 'sell' AND S.stockAccountID IN" +
+                    " (SELECT O.stockAccountID FROM OwnsAccount O WHERE O.username = U.username) GROUP BY U.username, S.quantity, S.sellPrice, S.buyPrice";
             PreparedStatement getStockSold = connection.prepareStatement(queryString);
             resultSet = getStockSold.executeQuery();
             while (resultSet.next()) {
@@ -197,7 +201,7 @@ public class managerInterface {
             }
             getStockSold.close();
 
-            System.out.println("genGovDTER list: \n");
+            System.out.println("genGovDTER list:");
             for (Map.Entry<String, Double> entry : counter.entrySet()) {
                 // got to add interest here later
                 if (entry.getValue() > 10000) {
@@ -212,17 +216,33 @@ public class managerInterface {
 
     public static void genCustomerReport(Connection connection, String customerUsername) throws SQLException {
         try {
-            String queryString = "SELECT DISTINCT M.balance, M.marketAccountID FROM MarketTransaction AS M, OwnsAccount AS O WHERE O.username = ? ORDER BY M.orderNumber DESC";
+            int marketAccountID = 0;
+            String queryString = "SELECT marketAccountID FROM OwnsAccount WHERE username = ?";
             PreparedStatement getAccountID = connection.prepareStatement(queryString);
+            getAccountID.setString(1, customerUsername);
             ResultSet resultSet = getAccountID.executeQuery();
             if (resultSet.next()) {
-                System.out.println("Market Account ID: " + resultSet.getDouble("marketAccountID")
-                        + "\nCurrent Balance: " + resultSet.getInt("balance"));
+                marketAccountID = resultSet.getInt(1);
             }
             getAccountID.close();
 
-            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE O.username = ?";
+            // get the trader's current balance
+            queryString = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
+            PreparedStatement getBalance = connection.prepareStatement(queryString);
+            getBalance.setInt(1, marketAccountID);
+            resultSet = getBalance.executeQuery();
+            double currentBalance = 0;
+            if (resultSet.next()) {
+                currentBalance = resultSet.getDouble(1);
+            }
+            getBalance.close();
+
+            System.out
+                    .println("Market Account ID: " + marketAccountID + "\nCurrent Balance: " + currentBalance + " USD");
+
+            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ?";
             PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
+            getStockAccountID.setString(1, customerUsername);
             resultSet = getStockAccountID.executeQuery();
             while (resultSet.next()) {
                 System.out.println("Stock Account ID: " + resultSet.getInt(1));
@@ -236,7 +256,7 @@ public class managerInterface {
     }
 
     public static void deleteTransactions(Connection connection) throws SQLException {
-         try {
+        try {
             String queryString = "DELETE FROM StockTransaction";
             PreparedStatement deleteST = connection.prepareStatement(queryString);
             deleteST.executeQuery();
@@ -246,12 +266,13 @@ public class managerInterface {
             PreparedStatement deleteMT = connection.prepareStatement(queryString);
             deleteMT.executeQuery();
             deleteMT.close();
-            connection.close();
-            queryString = "UPDATE MarketPrice M SET M.transactDate = (SELECT T.currentDate FROM TimeInfo T)";
+
+            queryString = "UPDATE MarketTransaction M SET M.transactDate = (SELECT T.currentDate FROM TimeInfo T), M.transactionType = 'newMonth'";
             PreparedStatement updateDate = connection.prepareStatement(queryString);
             updateDate.executeQuery();
             updateDate.close();
-            connection.close();
+            System.out.println("Test");
+
             System.out.println("deleted transactions");
         } catch (Exception e) {
             System.out.println("ERROR: deleteTransactions failed.");

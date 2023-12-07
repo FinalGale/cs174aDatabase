@@ -29,11 +29,37 @@ public class godModeInterface {
     public static void closeMarket(Connection connection) throws SQLException {
         // select from Star Profile the StockSymbol and CurrentPrice
         // Update Closing Price table the stockSymbol, currDate, and currentPrice
-        System.out.println("Closing market");
+
+        java.sql.Date currentDate = new java.sql.Date(0);
+
         try {
-            PreparedStatement setClosingPrice = connection.prepareStatement("UPDATE ClosingPrice C SET C.dailyClosingPrice FROM StarProfile S JOIN TimeInfo T ON S.stockSymbol = C.stockSymbol WHERE S.stockSymbol = C.stockSymbol AND T.currentDate = C.priceDate");
-            setClosingPrice.executeQuery();
-            setClosingPrice.close();
+            // get the current date
+            String queryString = "SELECT currentDate FROM TimeInfo";
+            PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
+            ResultSet resultSet = getCurrentDate.executeQuery();
+            if (resultSet.next()) {
+                currentDate = resultSet.getDate(1);
+            }
+
+            getCurrentDate.close();
+            System.out.println("Closing market");
+            // get the current stock price
+            queryString = "SELECT stockSymbol, currentPrice FROM StarProfile";
+            Statement getPrice = connection.createStatement();
+            resultSet = getPrice.executeQuery(queryString);
+            while (resultSet.next()) {
+                String stockSymbol = resultSet.getString(1);
+                double currentPrice = resultSet.getDouble(2);
+
+                PreparedStatement setClosingPrice = connection
+                        .prepareStatement("INSERT INTO ClosingPrice VALUES (?, ?, ?)");
+                setClosingPrice.setString(1, stockSymbol);
+                setClosingPrice.setDate(2, currentDate);
+                setClosingPrice.setDouble(3, currentPrice);
+                setClosingPrice.executeQuery();
+                setClosingPrice.close();
+            }
+            getPrice.close();
         } catch (Exception e) {
             System.out.println("ERROR: Closing Market failed.");
             System.out.println(e);
@@ -59,7 +85,7 @@ public class godModeInterface {
             updateStock.setString(2, stockSymbol);
             updateStock.executeQuery();
             updateStock.close();
-            
+
             System.out.println("Update to Stock Price completed");
         } catch (Exception e) {
             System.out.println("ERROR: setStockPrice failed.");
