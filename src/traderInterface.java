@@ -859,7 +859,6 @@ public class traderInterface {
 
             boolean quit = false;
             while (!quit) {
-                System.out.println("mID: " + marketAccountID);
                 System.out.println("Enter one of the following number options to execute a command: ");
                 System.out.println("(1) Deposit funds");
                 System.out.println("(2) Withdraw funds");

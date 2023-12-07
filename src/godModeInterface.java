@@ -9,10 +9,6 @@ public class godModeInterface {
     final static String DB_USER = "ADMIN";
     final static String DB_PASSWORD = "Cookie12345+";
 
-    public static void deleteTransactions(Connection connection) throws SQLException {
-
-    }
-
     public static void openMarket(Connection connection, String newDate) throws SQLException {
         System.out.println("Opening market to date " + newDate);
         try {
@@ -43,17 +39,19 @@ public class godModeInterface {
         System.out.println("Market has been closed");
     }
 
-    public static void setStockPrice(Connection connection, String stockType, String stockSymbol, double new_value) throws SQLException {
+    public static void setStockPrice(Connection connection, String stockType, String stockSymbol, double new_value)
+            throws SQLException {
         // search by stock symbol in star profile or signed contract table
         // then look at current price or total value and change it to new input value
         System.out.println("Setting new stock price");
         try {
-            PreparedStatement updateStock = connection.prepareStatement("UPDATE StarProfile SET currentPrice = ? WHERE stockSymbol = ?");
+            PreparedStatement updateStock = connection
+                    .prepareStatement("UPDATE StarProfile SET currentPrice = ? WHERE stockSymbol = ?");
             updateStock.setDouble(1, new_value);
             updateStock.setString(2, stockSymbol);
             updateStock.executeQuery();
             updateStock.close();
-            
+
             updateStock = connection.prepareStatement("UPDATE SignedContract SET totalValue = ? WHERE stockSymbol = ?");
             updateStock.setDouble(1, new_value);
             updateStock.setString(2, stockSymbol);
