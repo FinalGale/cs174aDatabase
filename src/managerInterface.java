@@ -56,6 +56,7 @@ public class managerInterface {
             
             System.out.println("genGovDTER list: \n");
             for (Map.Entry<String, Double> entry : counter.entrySet()) {
+                // got to add interest here later
                 if (entry.getValue() > 10000) {
                     System.out.println(entry.getKey());
                 }
@@ -91,33 +92,6 @@ public class managerInterface {
             System.out.println("ERROR: genCustomerReport failed.");
             System.out.println(e);
         }
-    }
-
-    public static void deleteTransactions(Connection connection) throws SQLException {
-
-    }
-
-    public static void openMarket(Connection connection, String newDate) throws SQLException {
-        System.out.println("Opening market to date " + newDate);
-        try {
-            // change the date in date table
-            PreparedStatement updateDate = connection.prepareStatement("UPDATE CurrDate SET date = ?");
-            updateDate.setDate(1, java.sql.Date.valueOf(newDate));
-            updateDate.executeQuery();
-            updateDate.close();
-            connection.close();
-        } catch (Exception e) {
-            System.out.println("ERROR: Opening Market failed.");
-            System.out.println(e);
-        }
-    }
-
-    public static void closeMarket(Connection connection) throws SQLException {
-        // don't allow trading if the market is closed
-    }
-
-    public static void setStockPrice(Connection connection) throws SQLException {
-
     }
 
     public static void main(String[] args) throws SQLException {
