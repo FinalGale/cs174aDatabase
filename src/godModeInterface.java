@@ -21,7 +21,7 @@ public class godModeInterface {
             updateDate.setDate(1, java.sql.Date.valueOf(newDate));
             updateDate.executeQuery();
             updateDate.close();
-            connection.close();
+
         } catch (Exception e) {
             System.out.println("ERROR: Opening Market failed.");
             System.out.println(e);
@@ -33,11 +33,9 @@ public class godModeInterface {
         // Update Closing Price table the stockSymbol, currDate, and currentPrice
         System.out.println("Closing market");
         try {
-            // change the date in date table
             PreparedStatement setClosingPrice = connection.prepareStatement("UPDATE ClosingPrice C SET C.dailyClosingPrice FROM StarProfile S JOIN TimeInfo T ON S.stockSymbol = C.stockSymbol WHERE S.stockSymbol = C.stockSymbol AND T.currentDate = C.priceDate");
             setClosingPrice.executeQuery();
             setClosingPrice.close();
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: Closing Market failed.");
             System.out.println(e);
@@ -62,7 +60,6 @@ public class godModeInterface {
             updateStock.executeQuery();
             updateStock.close();
             
-            connection.close();
             System.out.println("Update to Stock Price completed");
         } catch (Exception e) {
             System.out.println("ERROR: setStockPrice failed.");
