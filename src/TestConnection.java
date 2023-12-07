@@ -18,11 +18,11 @@
     Step 3: Run the file with "java -cp lib/ojdbc11.jar ./src/TestConnection.java"
  */
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.sql.Connection;
 
 import oracle.jdbc.pool.OracleDataSource;
 import oracle.jdbc.OracleConnection;
@@ -35,14 +35,14 @@ public class TestConnection {
     // <DATABASE_NAME_LOWERCASE> is your database name in lowercase
     // and
     // <PATH_TO_WALLET> is the path to the connection wallet on your machine.
-    // NOTE: on a Mac, there's no C: drive...
-    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/YamMaster909/Downloads/Wallet_projDB";
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
     final static String DB_PASSWORD = "Cookie12345+";
 
     // This method creates a database connection using
     // oracle.jdbc.pool.OracleDataSource.
     public static void main(String args[]) throws SQLException {
+
         Properties info = new Properties();
 
         System.out.println("Initializing connection properties...");
@@ -66,8 +66,7 @@ public class TestConnection {
             System.out.println("Driver Version: " + dbmd.getDriverVersion());
             // Print some connection properties
             System.out.println(
-                "Default Row Prefetch Value: " + connection.getDefaultRowPrefetch()
-            );
+                    "Default Row Prefetch Value: " + connection.getDefaultRowPrefetch());
             System.out.println("Database username: " + connection.getUserName());
             System.out.println();
             // Perform some database operations
@@ -82,13 +81,12 @@ public class TestConnection {
     // Inserts another TA into the Instructors table.
     public static void insertTA(Connection connection) throws SQLException {
         System.out.println("Preparing to insert TA into Instructors table...");
-        // Statement and ResultSet are AutoCloseable and closed automatically. 
+        // Statement and ResultSet are AutoCloseable and closed automatically.
         try (Statement statement = connection.createStatement()) {
             try (
-                ResultSet resultSet = statement.executeQuery(
-                    "INSERT INTO INSTRUCTORS VALUES (3, 'Momin Haider', 'TA')"
-                )
-            ) {}
+                    ResultSet resultSet = statement.executeQuery(
+                            "INSERT INTO INSTRUCTORS VALUES (3, 'Momin Haider', 'TA')")) {
+            }
         } catch (Exception e) {
             System.out.println("ERROR: insertion failed.");
             System.out.println(e);
@@ -97,21 +95,18 @@ public class TestConnection {
 
     // Displays data from Instructors table.
     public static void printInstructors(Connection connection) throws SQLException {
-        // Statement and ResultSet are AutoCloseable and closed automatically. 
+        // Statement and ResultSet are AutoCloseable and closed automatically.
         try (Statement statement = connection.createStatement()) {
             try (
-                ResultSet resultSet = statement.executeQuery(
-                    "SELECT * FROM INSTRUCTORS"
-                )
-            ) {
+                    ResultSet resultSet = statement.executeQuery(
+                            "SELECT * FROM INSTRUCTORS")) {
                 System.out.println("INSTRUCTORS:");
                 System.out.println("I_ID\tI_NAME\t\tI_ROLE");
                 while (resultSet.next()) {
                     System.out.println(
-                        resultSet.getString("I_ID") + "\t"
-                        + resultSet.getString("I_NAME") + "\t"
-                        + resultSet.getString("I_ROLE")
-                    );
+                            resultSet.getString("I_ID") + "\t"
+                                    + resultSet.getString("I_NAME") + "\t"
+                                    + resultSet.getString("I_ROLE"));
                 }
             }
         } catch (Exception e) {

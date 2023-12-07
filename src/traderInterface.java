@@ -1,21 +1,24 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.*;
 import java.util.*;
+
 import oracle.jdbc.pool.OracleDataSource;
 import oracle.jdbc.OracleConnection;
 
 public class traderInterface {
-    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/YamMaster909/Downloads/Wallet_projDB";
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
-    final static String DB_PASSWORD = "Cookie12345+";   
+    final static String DB_PASSWORD = "Cookie12345+";
 
     public static void deposit(Connection connection, double depositAmount, int marketAccountID) throws SQLException {
         System.out.println("Preparing to Deposit...");
         int orderNumber = 0;
         java.sql.Date currentDate = new java.sql.Date(0);
         double currentBalance = 0;
-        
+
         try {
-            //get the current date
+            // get the current date
             String queryString = "SELECT currentDate FROM TimeInfo";
             PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
             ResultSet resultSet = getCurrentDate.executeQuery();
@@ -24,8 +27,8 @@ public class traderInterface {
             }
             getCurrentDate.close();
 
-            //get the trader's current balance and order number
-            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            // get the trader's current balance and order number
+            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             resultSet = getBalance.executeQuery();
@@ -35,23 +38,23 @@ public class traderInterface {
             }
             getBalance.close();
 
-            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            PreparedStatement insertMT = connection
+                    .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
             insertMT.setInt(1, marketAccountID);
             insertMT.setDate(2, currentDate);
-            insertMT.setInt(3, orderNumber+1);
+            insertMT.setInt(3, orderNumber + 1);
             insertMT.setString(4, "deposit");
-            insertMT.setDouble(4, currentBalance + depositAmount);
+            insertMT.setDouble(5, currentBalance + depositAmount);
             insertMT.executeQuery();
             insertMT.close();
 
             System.out.println("Deposit Successful.");
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: Deposit failed.");
             System.out.println(e);
         }
     }
-    
+
     public static void withdraw(Connection connection, double withdrawAmount, int marketAccountID) throws SQLException {
         System.out.println("Preparing to Withdraw...");
         int orderNumber = 0;
@@ -59,7 +62,7 @@ public class traderInterface {
         double currentBalance = 0;
 
         try {
-            //get the current date
+            // get the current date
             String queryString = "SELECT currentDate FROM TimeInfo";
             PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
             ResultSet resultSet = getCurrentDate.executeQuery();
@@ -68,8 +71,8 @@ public class traderInterface {
             }
             getCurrentDate.close();
 
-            //get the trader's current balance and order number
-            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            // get the trader's current balance and order number
+            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             resultSet = getBalance.executeQuery();
@@ -84,24 +87,25 @@ public class traderInterface {
                 return;
             }
 
-            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            PreparedStatement insertMT = connection
+                    .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
             insertMT.setInt(1, marketAccountID);
             insertMT.setDate(2, currentDate);
-            insertMT.setInt(3, orderNumber+1);
+            insertMT.setInt(3, orderNumber + 1);
             insertMT.setString(4, "withdraw");
-            insertMT.setDouble(4, currentBalance - withdrawAmount);
+            insertMT.setDouble(5, currentBalance - withdrawAmount);
             insertMT.executeQuery();
             insertMT.close();
 
             System.out.println("Withdraw Successful.");
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: Withdraw failed.");
             System.out.println(e);
         }
     }
 
-    public static void buy(Connection connection, double quantity, String stockSymbol, String username, int marketAccountID) throws SQLException {
+    public static void buy(Connection connection, double quantity, String stockSymbol, String username,
+            int marketAccountID) throws SQLException {
         System.out.println("Preparing to buy...");
         int orderNumber = 0;
         int stockAccountID = 0;
@@ -111,7 +115,7 @@ public class traderInterface {
         double currentShares = 0;
 
         try {
-            //get the current date
+            // get the current date
             String queryString = "SELECT currentDate FROM TimeInfo";
             PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
             ResultSet resultSet = getCurrentDate.executeQuery();
@@ -120,8 +124,8 @@ public class traderInterface {
             }
             getCurrentDate.close();
 
-            //get the trader's current balance and order number
-            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            // get the trader's current balance and order number
+            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             resultSet = getBalance.executeQuery();
@@ -131,13 +135,16 @@ public class traderInterface {
             }
             getBalance.close();
 
-            //get the current stock price
+            // get the current stock price
             queryString = "SELECT currentPrice FROM StarProfile WHERE stockSymbol = ?";
             PreparedStatement getPrice = connection.prepareStatement(queryString);
             getPrice.setString(1, stockSymbol);
             resultSet = getPrice.executeQuery();
             if (resultSet.next()) {
                 currentPrice = resultSet.getDouble(1);
+            } else {
+                System.out.println("Buy failed. This stock doesn't exist.");
+                return;
             }
             getPrice.close();
 
@@ -147,58 +154,57 @@ public class traderInterface {
                 return;
             }
 
-            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+            PreparedStatement insertMT = connection
+                    .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
             insertMT.setInt(1, marketAccountID);
             insertMT.setDate(2, currentDate);
-            insertMT.setInt(3, orderNumber+1);
+            insertMT.setInt(3, orderNumber + 1);
             insertMT.setString(4, "buy");
-            insertMT.setDouble(4, currentBalance - totalCost);
+            insertMT.setDouble(5, currentBalance - totalCost);
             insertMT.executeQuery();
             insertMT.close();
 
-            //check if we need to create a new stock account
-            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ? AND stockSymbol = ?";
+            // check if we need to create a new stock account
+            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ?";
             PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
             getStockAccountID.setString(1, username);
-            getStockAccountID.setString(2, stockSymbol);
             resultSet = getStockAccountID.executeQuery();
-            if (!resultSet.next()) {
-                //generate new stockAccountID by getting the last ID
-                queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ? ORDER BY stockAccountID DESC";
-                PreparedStatement getLast = connection.prepareStatement(queryString);
-                getLast.setString(1, username);
-                resultSet = getLast.executeQuery();
-                if (resultSet.next()) {
-                    stockAccountID = resultSet.getInt(1);
+            boolean foundStock = false;
+            while (resultSet.next()) {
+                int curSID = resultSet.getInt(1);
+                queryString = "SELECT stockSymbol FROM StockAccount WHERE stockAccountID = ?";
+                PreparedStatement getStockSymbol = connection.prepareStatement(queryString);
+                getStockSymbol.setInt(1, curSID);
+                ResultSet resultSet2 = getStockSymbol.executeQuery();
+                String curStockSymbol = "";
+                if (resultSet2.next()) {
+                    curStockSymbol = resultSet2.getString(1);
                 }
-                getLast.close();
-
-                PreparedStatement insertOA = connection.prepareStatement("INSERT INTO OwnsAccount VALUES (?, ?, ?, ?)");
-                insertOA.setString(1, username);
-                insertOA.setInt(2, marketAccountID);
-                insertOA.setInt(3, stockAccountID+1);
-                insertOA.setString(4, "buy");
-                insertOA.executeQuery();
-                insertOA.close();
-
-                PreparedStatement insertSA = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
-                insertSA.setInt(1, stockAccountID+1);
-                insertSA.setString(2, stockSymbol);
-                insertSA.setDouble(3, currentPrice);
-                insertSA.setDouble(4, quantity);
-                insertSA.executeQuery();
-                insertSA.close();
-            } else {
-                stockAccountID = resultSet.getInt(1);
+                if (curStockSymbol.equals(stockSymbol)) {
+                    foundStock = true;
+                    stockAccountID = curSID;
+                    break;
+                }
+                getStockSymbol.close();
             }
             getStockAccountID.close();
 
-            //get the current number of shares 
-            queryString = "SELECT quantity FROM StockAccount WHERE StockAccountID = ? AND stockSymbol = ? AND buyPrice = ?";
+            if (!foundStock) {
+                // generate new stockAccountID by getting the last ID
+                queryString = "SELECT stockAccountID FROM StockAccount ORDER BY stockAccountID DESC";
+                Statement getLast = connection.createStatement();
+                resultSet = getLast.executeQuery(queryString);
+                if (resultSet.next()) {
+                    stockAccountID = resultSet.getInt(1);
+                }
+                stockAccountID++;
+                getLast.close();
+            }
+
+            // get the current number of shares
+            queryString = "SELECT quantity FROM StockAccount WHERE StockAccountID = ?";
             PreparedStatement getCurrentShares = connection.prepareStatement(queryString);
             getCurrentShares.setInt(1, stockAccountID);
-            getCurrentShares.setString(2, stockSymbol);
-            getCurrentShares.setDouble(3, currentPrice);
             resultSet = getCurrentShares.executeQuery();
             if (resultSet.next()) {
                 currentShares = resultSet.getInt(1);
@@ -206,23 +212,32 @@ public class traderInterface {
             getCurrentShares.close();
 
             if (currentShares == 0) {
-                PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
+                PreparedStatement insertST = connection
+                        .prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
                 insertST.setInt(1, stockAccountID);
                 insertST.setString(2, stockSymbol);
                 insertST.setDouble(3, currentPrice);
-                insertST.setDouble(8, quantity);
+                insertST.setDouble(4, quantity);
                 insertST.executeQuery();
                 insertST.close();
+
+                PreparedStatement insertOA = connection.prepareStatement("INSERT INTO OwnsAccount VALUES (?, ?, ?)");
+                insertOA.setString(1, username);
+                insertOA.setInt(2, marketAccountID);
+                insertOA.setInt(3, stockAccountID);
+                insertOA.executeQuery();
+                insertOA.close();
             } else {
-                PreparedStatement updateST = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ?");
+                PreparedStatement updateST = connection.prepareStatement(
+                        "UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ?");
                 updateST.setDouble(1, quantity + currentShares);
                 updateST.setInt(2, stockAccountID);
-                updateST.setString(3, stockSymbol);
                 updateST.executeQuery();
                 updateST.close();
             }
 
-            PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement insertST = connection
+                    .prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             insertST.setInt(1, stockAccountID);
             insertST.setString(2, stockSymbol);
             insertST.setDouble(3, currentPrice);
@@ -235,25 +250,25 @@ public class traderInterface {
             insertST.close();
 
             System.out.println("Buy Transaction Successful.");
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: Buy failed.");
             System.out.println(e);
         }
     }
 
-    public static void sell(Connection connection, ArrayList<Double> quantitiesSold, String stockSymbol, ArrayList<Double> buyPrices, String username, int marketAccountID) throws SQLException {
+    public static void sell(Connection connection, ArrayList<Double> quantitiesSold, String stockSymbol,
+            ArrayList<Double> buyPrices, String username, int marketAccountID) throws SQLException {
         System.out.println("Preparing to sell...");
         java.sql.Date currentDate = new java.sql.Date(0);
         int n = quantitiesSold.size();
         double currentBalance = 0;
         double currentPrice = 0;
         int orderNumber = 0;
-        int stockAccountID = 0;
         double[] currentShares = new double[n];
+        int sid[] = new int[n];
 
         try {
-            //get the current date
+            // get the current date
             String queryString = "SELECT currentDate FROM TimeInfo";
             PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
             ResultSet resultSet = getCurrentDate.executeQuery();
@@ -262,8 +277,8 @@ public class traderInterface {
             }
             getCurrentDate.close();
 
-            //get the trader's current balance and order number
-            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            // get the trader's current balance and order number
+            queryString = "SELECT balance, orderNumber FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             resultSet = getBalance.executeQuery();
@@ -273,36 +288,30 @@ public class traderInterface {
             }
             getBalance.close();
 
-            //get the current stock price
+            // get the current stock price
             queryString = "SELECT currentPrice FROM StarProfile WHERE stockSymbol = ?";
             PreparedStatement getPrice = connection.prepareStatement(queryString);
             getPrice.setString(1, stockSymbol);
             resultSet = getPrice.executeQuery();
             if (resultSet.next()) {
                 currentPrice = resultSet.getDouble(1);
+            } else {
+                System.out.println("Buy failed. This stock doesn't exist.");
+                return;
             }
             getPrice.close();
 
-            //get stockAccountID
-            queryString = "SELECT stockAccountID FROM OwnsAccount WHERE username = ? AND stockSymbol = ?";
-            PreparedStatement getStockAccountID = connection.prepareStatement(queryString);
-            getStockAccountID.setString(1, username);
-            getStockAccountID.setString(2, stockSymbol);
-            resultSet = getStockAccountID.executeQuery();
-            if (resultSet.next()) {
-                stockAccountID = resultSet.getInt(1);
-            }
-
-            //get the number of shares the customer currently owns
+            // get the number of shares the customer currently owns
             for (int i = 0; i < n; i++) {
-                queryString = "SELECT quantity FROM StockAccount WHERE StockAccountID = ? AND stockSymbol = ? AND buyPrice = ?";
+                queryString = "SELECT stockAccountID, quantity FROM StockAccount WHERE stockSymbol = ? AND buyPrice = ? AND StockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
                 PreparedStatement getCurrentShares = connection.prepareStatement(queryString);
-                getCurrentShares.setInt(1, stockAccountID);
-                getCurrentShares.setString(2, stockSymbol);
-                getCurrentShares.setDouble(3, buyPrices.get(i));
+                getCurrentShares.setString(1, stockSymbol);
+                getCurrentShares.setDouble(2, buyPrices.get(i));
+                getCurrentShares.setString(3, username);
                 resultSet = getCurrentShares.executeQuery();
                 if (resultSet.next()) {
-                    currentShares[i] = resultSet.getDouble(1);
+                    sid[i] = resultSet.getInt(1);
+                    currentShares[i] = resultSet.getDouble(2);
                 }
                 getCurrentShares.close();
             }
@@ -313,7 +322,7 @@ public class traderInterface {
                     return;
                 }
             }
-            //ensure that the balance won't go negative after selling
+            // ensure that the balance won't go negative after selling
             double revenue = -20;
             for (int i = 0; i < n; i++) {
                 revenue += quantitiesSold.get(i) * currentPrice;
@@ -321,9 +330,10 @@ public class traderInterface {
             if (currentBalance + revenue < 0) {
                 System.out.println("ERROR: Sell failed. Your account lacks sufficient funds.");
                 return;
-            } 
+            }
 
-            PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?)");
+            PreparedStatement insertMT = connection
+                    .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
             insertMT.setInt(1, marketAccountID);
             insertMT.setDate(2, currentDate);
             insertMT.setInt(3, orderNumber + 1);
@@ -333,8 +343,9 @@ public class traderInterface {
             insertMT.close();
 
             for (int i = 0; i < n; i++) {
-                PreparedStatement insertST = connection.prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                insertST.setInt(1, stockAccountID);
+                PreparedStatement insertST = connection
+                        .prepareStatement("INSERT INTO StockTransaction VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                insertST.setInt(1, sid[i]);
                 insertST.setString(2, stockSymbol);
                 insertST.setDouble(3, buyPrices.get(i));
                 insertST.setDate(4, currentDate);
@@ -348,27 +359,30 @@ public class traderInterface {
 
             for (int i = 0; i < n; i++) {
                 if (currentShares[i] == quantitiesSold.get(i)) {
-                    //we are selling all of this stock, so we delete the row
-                    PreparedStatement updateSA = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
-                    updateSA.setInt(1, stockAccountID);
-                    updateSA.setString(2, stockSymbol);
-                    updateSA.setDouble(3, buyPrices.get(i));
-                    updateSA.executeQuery();
-                    updateSA.close();
+                    // we are selling all of this stock, so we delete the row
+                    PreparedStatement deleteOA = connection.prepareStatement(
+                            "DELETE FROM OwnsAccount WHERE stockAccountID = ?");
+                    deleteOA.setInt(1, sid[i]);
+                    deleteOA.executeQuery();
+                    deleteOA.close();
+
+                    PreparedStatement deleteSA = connection.prepareStatement(
+                            "DELETE FROM StockAccount WHERE stockAccountID = ?");
+                    deleteSA.setInt(1, sid[i]);
+                    deleteSA.executeQuery();
+                    deleteSA.close();
                 } else {
-                    //we are selling part of this stock, so we subtract from the quantity
-                    PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                    // we are selling part of this stock, so we subtract from the quantity
+                    PreparedStatement updateSA = connection.prepareStatement(
+                            "UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ?");
                     updateSA.setDouble(1, currentShares[i] - quantitiesSold.get(i));
-                    updateSA.setInt(2, stockAccountID);
-                    updateSA.setString(3, stockSymbol);
-                    updateSA.setDouble(4, buyPrices.get(i));
+                    updateSA.setInt(2, sid[i]);
                     updateSA.executeQuery();
                     updateSA.close();
                 }
             }
 
             System.out.println("Sell Transaction Successful.");
-            connection.close();
         } catch (Exception e) {
             System.out.println("ERROR: Sell failed.");
             System.out.println(e);
@@ -383,7 +397,7 @@ public class traderInterface {
         int cancelOrderNumber = 0;
 
         try {
-            //get the current date
+            // get the current date
             String queryString = "SELECT currentDate FROM TimeInfo";
             PreparedStatement getCurrentDate = connection.prepareStatement(queryString);
             ResultSet resultSet = getCurrentDate.executeQuery();
@@ -392,8 +406,8 @@ public class traderInterface {
             }
             getCurrentDate.close();
 
-            //get the trader's current balance
-            queryString = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            // get the trader's current balance
+            queryString = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             resultSet = getBalance.executeQuery();
@@ -402,7 +416,7 @@ public class traderInterface {
             }
             getBalance.close();
 
-            //get the most recent buy/sell MarketTransaction
+            // get the most recent buy/sell MarketTransaction
             queryString = "SELECT * FROM MarketTransaction WHERE marketAccountID = ? AND date = ? AND (transactionType = 'buy' OR transactionType = 'sell') ORDER BY orderNumber DESC";
             PreparedStatement getMT = connection.prepareStatement(queryString);
             getMT.setInt(1, marketAccountID);
@@ -416,7 +430,7 @@ public class traderInterface {
             String cancelTransactionType = resultSet.getString(4);
             getMT.close();
 
-            //get number of different buy prices
+            // get number of different buy prices
             queryString = "SELECT COUNT(*) FROM StockTransaction WHERE orderNumber = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
             PreparedStatement getCount = connection.prepareStatement(queryString);
             getCount.setInt(1, cancelOrderNumber);
@@ -426,7 +440,7 @@ public class traderInterface {
                 n = resultSet.getInt(1);
             }
 
-            //get the most recent buy/sell StockTransaction
+            // get the most recent buy/sell StockTransaction
             queryString = "SELECT * FROM StockTransaction WHERE orderNumber = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
             PreparedStatement getST = connection.prepareStatement(queryString);
             getST.setInt(1, cancelOrderNumber);
@@ -448,7 +462,7 @@ public class traderInterface {
             }
             getST.close();
 
-            //delete the transactions
+            // delete the transactions
             queryString = "DELETE FROM MarketTransaction WHERE marketAccountID = ? AND orderNumber = ?";
             PreparedStatement deleteMT = connection.prepareStatement(queryString);
             deleteMT.setInt(1, marketAccountID);
@@ -459,21 +473,21 @@ public class traderInterface {
             PreparedStatement deleteST = connection.prepareStatement(queryString);
             deleteST.setInt(2, sid);
             deleteST.setInt(1, cancelOrderNumber);
-            resultSet = deleteST.executeQuery();            
+            resultSet = deleteST.executeQuery();
 
             if (cancelTransactionType == "buy") {
-                //cancel the last buy transaction
+                // cancel the last buy transaction
                 double payback = buyPrices[0] * quantities[0] - 20;
                 if (currentBalance + payback < 0) {
                     System.out.println("ERROR: Cancel failed. Your account lacks sufficient funds.");
                     return;
                 }
 
-                //delete the appropriate stocks from the account
+                // delete the appropriate stocks from the account
                 for (int i = 0; i < n; i++) {
                     queryString = "SELECT quantity FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?";
                     PreparedStatement getCurrentShares = connection.prepareStatement(queryString);
-                    getCurrentShares.setInt(1, sid); 
+                    getCurrentShares.setInt(1, sid);
                     getCurrentShares.setString(2, stockSymbol);
                     getCurrentShares.setDouble(3, buyPrices[i]);
                     resultSet = getCurrentShares.executeQuery();
@@ -481,35 +495,38 @@ public class traderInterface {
                     getCurrentShares.close();
 
                     if (currentShares == quantities[i]) {
-                        PreparedStatement deleteSA = connection.prepareStatement("DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                        PreparedStatement deleteSA = connection.prepareStatement(
+                                "DELETE FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
                         deleteSA.setInt(1, sid);
                         deleteSA.setString(2, stockSymbol);
                         deleteSA.setDouble(3, buyPrices[i]);
                         deleteSA.executeQuery();
                         deleteSA.close();
                     } else {
-                        PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                        PreparedStatement updateSA = connection.prepareStatement(
+                                "UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
                         updateSA.setDouble(1, currentShares - quantities[i]);
                         updateSA.setInt(2, sid);
                         updateSA.setString(3, stockSymbol);
                         updateSA.setDouble(4, buyPrices[i]);
                         updateSA.executeQuery();
-                        updateSA.close();  
-                    }    
-                }     
+                        updateSA.close();
+                    }
+                }
 
-                //add the cancel transaction to the table
-                PreparedStatement updateMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+                // add the cancel transaction to the table
+                PreparedStatement updateMT = connection
+                        .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
                 updateMT.setInt(1, marketAccountID);
                 updateMT.setDate(2, currentDate);
-                updateMT.setInt(3, cancelOrderNumber+1);
+                updateMT.setInt(3, cancelOrderNumber + 1);
                 updateMT.setString(4, "cancelBuy");
                 updateMT.setDouble(5, currentBalance + payback);
                 updateMT.executeQuery();
                 updateMT.close();
 
             } else if (cancelTransactionType == "sell") {
-                //cancel the last sell transaction
+                // cancel the last sell transaction
                 double loss = -20;
                 for (int i = 0; i < n; i++) {
                     loss -= (sellPrices[i] - buyPrices[i]);
@@ -520,7 +537,7 @@ public class traderInterface {
                     return;
                 }
 
-                //add back the appropriate stocks to stockAccount
+                // add back the appropriate stocks to stockAccount
                 for (int i = 0; i < n; i++) {
                     queryString = "SELECT quantity FROM StockAccount WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?";
                     PreparedStatement getCurrentShares = connection.prepareStatement(queryString);
@@ -535,8 +552,10 @@ public class traderInterface {
                     getCurrentShares.close();
 
                     if (currentShares == 0) {
-                        //we need to put back the stocks as insertions since the trader doesn't have any
-                        PreparedStatement insertSA = connection.prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
+                        // we need to put back the stocks as insertions since the trader doesn't have
+                        // any
+                        PreparedStatement insertSA = connection
+                                .prepareStatement("INSERT INTO StockAccount VALUES (?, ?, ?, ?)");
                         insertSA.setInt(1, sid);
                         insertSA.setString(2, stockSymbol);
                         insertSA.setDouble(3, buyPrices[i]);
@@ -544,28 +563,29 @@ public class traderInterface {
                         insertSA.executeQuery();
                         insertSA.close();
                     } else {
-                        //the trader has some of the stocks already so we add on to the existing row
-                        PreparedStatement updateSA = connection.prepareStatement("UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
+                        // the trader has some of the stocks already so we add on to the existing row
+                        PreparedStatement updateSA = connection.prepareStatement(
+                                "UPDATE StockAccount SET quantity = ? WHERE stockAccountID = ? AND stockSymbol = ? AND buyPrice = ?");
                         updateSA.setDouble(1, currentShares + quantities[i]);
                         updateSA.setInt(2, sid);
                         updateSA.setString(3, stockSymbol);
                         updateSA.setDouble(4, buyPrices[i]);
                         updateSA.executeQuery();
-                        updateSA.close();  
-                    }    
-                }    
-                //add the cancel transaction to the table
-                PreparedStatement insertMT = connection.prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
+                        updateSA.close();
+                    }
+                }
+                // add the cancel transaction to the table
+                PreparedStatement insertMT = connection
+                        .prepareStatement("INSERT INTO MarketTransaction VALUES (?, ?, ?, ?, ?)");
                 insertMT.setInt(1, marketAccountID);
                 insertMT.setDate(2, currentDate);
-                insertMT.setInt(3, cancelOrderNumber+1);
+                insertMT.setInt(3, cancelOrderNumber + 1);
                 insertMT.setString(4, "cancelSell");
                 insertMT.setDouble(5, currentBalance + loss);
                 insertMT.executeQuery();
                 insertMT.close();
 
                 System.out.println("Cancel Successful.");
-                connection.close();
             }
         } catch (Exception e) {
             System.out.println("ERROR: Cancel failed.");
@@ -575,9 +595,9 @@ public class traderInterface {
 
     public static void showBalance(Connection connection, int marketAccountID) throws SQLException {
         try {
-            //get the trader's current balance
+            // get the trader's current balance
             double currentBalance = 0;
-            String queryString = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? ORDER BY date DESC, orderNumber DESC";
+            String queryString = "SELECT balance FROM MarketTransaction WHERE marketAccountID = ? ORDER BY transactDate DESC, orderNumber DESC";
             PreparedStatement getBalance = connection.prepareStatement(queryString);
             getBalance.setInt(1, marketAccountID);
             ResultSet resultSet = getBalance.executeQuery();
@@ -592,16 +612,17 @@ public class traderInterface {
         }
     }
 
-    public static void showTransactionHistory(Connection connection, String username, String stockSymbol) throws SQLException {
+    public static void showTransactionHistory(Connection connection, String username, String stockSymbol)
+            throws SQLException {
         try {
-            //get all StockTransactions
+            // get all StockTransactions
             String queryString = "SELECT * FROM StockTransaction WHERE stocksymbol = ? AND stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
             PreparedStatement getStockTransaction = connection.prepareStatement(queryString);
             getStockTransaction.setString(1, stockSymbol);
             getStockTransaction.setString(2, username);
             ResultSet resultSet = getStockTransaction.executeQuery();
             getStockTransaction.close();
-            
+
             System.out.println("Your transactions this month for " + stockSymbol + ": ");
             while (resultSet.next()) {
                 double buyPrice = resultSet.getDouble(3);
@@ -609,8 +630,9 @@ public class traderInterface {
                 String transactionType = resultSet.getString(6);
                 double sellPrice = resultSet.getDouble(7);
                 double quantity = resultSet.getDouble(8);
-                System.out.println("Date: " + date + "; Transaction Type: " + transactionType + 
-                "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "") + "; Quantity: " + quantity);
+                System.out.println("Date: " + date + "; Transaction Type: " + transactionType +
+                        "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "")
+                        + "; Quantity: " + quantity);
             }
         } catch (Exception e) {
             System.out.println("ERROR: showTransactionHistory failed.");
@@ -620,7 +642,7 @@ public class traderInterface {
 
     public static void showStocks(Connection connection, String username) throws SQLException {
         try {
-            //get all stock accounts
+            // get all stock accounts
             String queryString = "SELECT * FROM StockAccount WHERE stockAccountID IN (SELECT stockAccountID FROM OwnsAccount WHERE username = ?)";
             PreparedStatement getSA = connection.prepareStatement(queryString);
             getSA.setString(1, username);
@@ -632,7 +654,8 @@ public class traderInterface {
                 String stockSymbol = resultSet.getString(2);
                 double buyPrice = resultSet.getDouble(3);
                 double quantity = resultSet.getDouble(4);
-                System.out.println("Stock Symbol: " + stockSymbol + "; Buy Price: " + buyPrice + "; Quantity: " + quantity);
+                System.out.println(
+                        "Stock Symbol: " + stockSymbol + "; Buy Price: " + buyPrice + "; Quantity: " + quantity);
             }
         } catch (Exception e) {
             System.out.println("ERROR: showStocks failed.");
@@ -642,32 +665,38 @@ public class traderInterface {
 
     public static void getCurStockPriceAndStarProfile(Connection connection, String stockSymbol) throws SQLException {
         try {
-            String queryString = "SELECT * FROM StarProfile AS S WHERE S.stockSymbol = ?";
+            String queryString = "SELECT * FROM StarProfile WHERE stockSymbol = ?";
             PreparedStatement getStockInfo = connection.prepareStatement(queryString);
             getStockInfo.setString(1, stockSymbol);
             ResultSet resultSet = getStockInfo.executeQuery();
-            String name = resultSet.getString(2);
-            double currentPrice = resultSet.getDouble(4);
-            Timestamp dateOfBirth = resultSet.getTimestamp(5);
+            String name = "";
+            double currentPrice = 0;
+            java.sql.Date dateOfBirth = new java.sql.Date(0);
+            if (resultSet.next()) {
+                name = resultSet.getString(2);
+                currentPrice = resultSet.getDouble(3);
+                dateOfBirth = resultSet.getDate(4);
+            }
             getStockInfo.close();
 
             System.out.println("Current Price for " + stockSymbol + ": " + currentPrice + " USD\n" +
-                                "Actor Profile for " + name + ":\n" +
-                                "Date of Birth: " + dateOfBirth);
+                    "Actor Profile for " + name + ":\n" +
+                    "Date of Birth: " + dateOfBirth);
             System.out.println("----------------------------------------");
 
-            queryString = "SELECT * FROM SignedContract AS S WHERE S.stockSymbol = ?";
+            queryString = "SELECT * FROM SignedContract WHERE stockSymbol = ?";
             PreparedStatement getContractInfo = connection.prepareStatement(queryString);
             getContractInfo.setString(1, stockSymbol);
             resultSet = getStockInfo.executeQuery();
 
             System.out.println("Movie Contracts signed by " + name + ": ");
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 String title = resultSet.getString(2);
                 int productionYear = resultSet.getInt(3);
                 String role = resultSet.getString(4);
                 double totalValue = resultSet.getDouble(5);
-                System.out.println("Movie title: " + title + "; Production Year: " + productionYear + "; Role: " + role + "; Total Payment Value: " + totalValue);
+                System.out.println("Movie title: " + title + "; Production Year: " + productionYear + "; Role: " + role
+                        + "; Total Payment Value: " + totalValue);
             }
             getContractInfo.close();
         } catch (Exception e) {
@@ -678,7 +707,7 @@ public class traderInterface {
 
     public static void getTopMovies(Connection connection, int startDate, int stopDate) throws SQLException {
         try {
-            String queryString = "SELECT M.title, M.productionYear FROM Movie AS M WHERE M.productionYear >= ? AND M.productionYear <= ? AND M.rating = 10";
+            String queryString = "SELECT title, productionYear FROM Movie WHERE productionYear >= ? AND productionYear <= ? AND rating = 10";
             PreparedStatement getTopMovies = connection.prepareStatement(queryString);
             getTopMovies.setInt(1, startDate);
             getTopMovies.setInt(2, stopDate);
@@ -698,14 +727,14 @@ public class traderInterface {
 
     public static void getReviews(Connection connection, String title, int productionYear) throws SQLException {
         try {
-            String queryString = "SELECT review FROM Movie WHERE title = ? AND productionYear = ?";
+            String queryString = "SELECT review FROM Review WHERE title = ? AND productionYear = ?";
             PreparedStatement getReviews = connection.prepareStatement(queryString);
             getReviews.setString(1, title);
             getReviews.setInt(2, productionYear);
             ResultSet resultSet = getReviews.executeQuery();
 
             System.out.println("Movie Reviews for " + title + " (" + productionYear + "): \n");
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 String writtenContent = resultSet.getString(1);
                 System.out.println(writtenContent + "\n");
             }
@@ -734,19 +763,20 @@ public class traderInterface {
         // With AutoCloseable, the connection is closed automatically
         try (OracleConnection connection = (OracleConnection) ods.getConnection()) {
             System.out.println("Connection established!\n");
-            Scanner input = new Scanner(System.in);
-            System.out.println("Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
+            BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+            System.out.println(
+                    "Welcome to the Stars 'R' Us Trader Interace!\nEnter 1 to login, or 2 to create an account:");
             String username = "";
             String password = "";
             int marketAccountID = 0;
 
-            if (input.nextInt() == 1) {
+            if (Integer.parseInt(input.readLine()) == 1) {
                 boolean userFound = false;
                 while (!userFound) {
                     System.out.print("Enter your username: ");
-                    username = input.nextLine();
+                    username = input.readLine();
                     System.out.print("Enter your password: ");
-                    password = input.nextLine();
+                    password = input.readLine();
                     String queryString = "SELECT * FROM UserProfile WHERE username = ? AND password = ?";
                     PreparedStatement checkUser = connection.prepareStatement(queryString);
                     checkUser.setString(1, username);
@@ -758,24 +788,34 @@ public class traderInterface {
                     } else {
                         System.out.println("Username or password is incorrect. Try again.");
                     }
+                    checkUser.close();
+                }
+
+                String queryString = "SELECT marketAccountID FROM OwnsAccount WHERE username = ?";
+                PreparedStatement getMarketAccountID = connection.prepareStatement(queryString);
+                getMarketAccountID.setString(1, username);
+                ResultSet resultSet = getMarketAccountID.executeQuery();
+                if (resultSet.next()) {
+                    marketAccountID = resultSet.getInt(1);
                 }
             } else {
                 System.out.print("Create a username: ");
-                username = input.nextLine();
+                input.readLine();
+                username = input.readLine();
                 System.out.print("Create a password: ");
-                password = input.nextLine();
+                password = input.readLine();
                 System.out.print("Enter your Tax ID: ");
-                String taxID = input.nextLine();
+                String taxID = input.readLine();
                 System.out.print("Enter your full name: ");
-                String name = input.nextLine();
+                String name = input.readLine();
                 System.out.print("Enter the State that you live in: ");
-                String state = input.nextLine();
+                String state = input.readLine();
                 System.out.print("Enter your phone number: ");
-                String phoneNumber = input.nextLine();
+                String phoneNumber = input.readLine();
                 System.out.print("Enter your email address: ");
-                String email = input.nextLine();
+                String email = input.readLine();
 
-                //insert new user profile
+                // insert new user profile
                 String queryString = "INSERT INTO UserProfile VALUES (?, ?, ?, ?, ?, ?, ?)";
                 PreparedStatement insertUser = connection.prepareStatement(queryString);
                 insertUser.setString(1, username);
@@ -785,9 +825,9 @@ public class traderInterface {
                 insertUser.setString(5, state);
                 insertUser.setString(6, phoneNumber);
                 insertUser.setString(7, email);
-                insertUser.executeQuery();   
+                insertUser.executeQuery();
 
-                //generate new marketAccountID
+                // generate new marketAccountID
                 queryString = "SELECT MAX(marketAccountID) FROM MarketAccount";
                 Statement getMarketAccountID = connection.createStatement();
                 ResultSet resultSet = getMarketAccountID.executeQuery(queryString);
@@ -797,21 +837,21 @@ public class traderInterface {
                 marketAccountID++;
                 getMarketAccountID.close();
 
-                //create new market account
+                // create new market account
                 queryString = "INSERT INTO MarketAccount VALUES (?)";
                 PreparedStatement insertMA = connection.prepareStatement(queryString);
                 insertMA.setInt(1, marketAccountID);
-                insertMA.executeQuery(); 
+                insertMA.executeQuery();
 
-                queryString = "INSERT INTO OwnsAccount VALUES (?, ?, -1)";
+                queryString = "INSERT INTO OwnsAccount VALUES (?, ?, 0)";
                 PreparedStatement insertOA = connection.prepareStatement(queryString);
                 insertOA.setString(1, username);
                 insertOA.setInt(2, marketAccountID);
-                insertOA.executeQuery();   
+                insertOA.executeQuery();
 
-                //create initial deposit of $1000
+                // create initial deposit of $1000
                 deposit(connection, 1000, marketAccountID);
-                
+
                 System.out.println("Account created successfully!");
             }
 
@@ -830,41 +870,42 @@ public class traderInterface {
                 System.out.println("(10) Get top movies in a range of years");
                 System.out.println("(11) Get movie reviews for a movie");
                 System.out.println("(12) Exit the Trader Interface");
-                int option = input.nextInt();
+                int option = Integer.parseInt(input.readLine());
 
-                switch(option) {
+                switch (option) {
                     case 1:
                         System.out.print("Enter the amount to deposit: ");
-                        double depositAmount = input.nextDouble();
+                        double depositAmount = Double.parseDouble(input.readLine());
                         deposit(connection, depositAmount, marketAccountID);
                         break;
                     case 2:
                         System.out.print("Enter the amount to withdraw: ");
-                        double withdrawAmount = input.nextDouble();
-                        deposit(connection, withdrawAmount, marketAccountID);
+                        double withdrawAmount = Double.parseDouble(input.readLine());
+                        withdraw(connection, withdrawAmount, marketAccountID);
                         break;
                     case 3:
                         System.out.print("Enter the symbol of the stock you are buying: ");
-                        String stockSymbolBuy = input.nextLine();
+                        String stockSymbolBuy = input.readLine();
                         System.out.print("Enter the quantity you are buying: ");
-                        double quantityBuy = input.nextDouble();
+                        double quantityBuy = Double.parseDouble(input.readLine());
                         buy(connection, quantityBuy, stockSymbolBuy, username, marketAccountID);
                         break;
                     case 4:
                         System.out.print("Enter the symbol of the stock you are selling: ");
-                        String stockSymbolSell = input.nextLine();
+                        String stockSymbolSell = input.readLine();
                         boolean stopSell = false;
                         ArrayList<Double> buyPrices = new ArrayList<Double>();
                         ArrayList<Double> quantitiesSold = new ArrayList<Double>();
                         while (!stopSell) {
-                            System.out.print("Enter a 'buy price' of the stock you are selling, or enter -1 if you are done: ");
-                            double bp = input.nextDouble();
+                            System.out.print(
+                                    "Enter a 'buy price' of the stock you are selling, or enter -1 if you are done: ");
+                            double bp = Double.parseDouble(input.readLine());
                             if (bp == -1) {
                                 break;
                             }
                             buyPrices.add(bp);
                             System.out.print("Enter the quantity you are selling: ");
-                            quantitiesSold.add(input.nextDouble());
+                            quantitiesSold.add(Double.parseDouble(input.readLine()));
                         }
                         sell(connection, quantitiesSold, stockSymbolSell, buyPrices, username, marketAccountID);
                         break;
@@ -876,31 +917,32 @@ public class traderInterface {
                         break;
                     case 7:
                         System.out.println("Enter the stock symbol of the account you want to view: ");
-                        showTransactionHistory(connection, username, input.nextLine());
+                        showTransactionHistory(connection, username, input.readLine());
                         break;
                     case 8:
                         showStocks(connection, username);
                         break;
                     case 9:
                         System.out.println("Enter the stock symbol of the Star profile you want to view: ");
-                        getCurStockPriceAndStarProfile(connection, input.nextLine());
+                        getCurStockPriceAndStarProfile(connection, input.readLine());
                         break;
                     case 10:
                         System.out.println("Enter the starting year for the search range: ");
-                        int startDate = input.nextInt();
+                        int startDate = Integer.parseInt(input.readLine());
                         System.out.println("Enter the ending year for the search range: ");
-                        int stopDate = input.nextInt();
+                        int stopDate = Integer.parseInt(input.readLine());
                         getTopMovies(connection, startDate, stopDate);
                         break;
                     case 11:
                         System.out.println("Enter the title of the movie: ");
-                        String title = input.nextLine();
+                        String title = input.readLine();
                         System.out.println("Enter the production year of the movie: ");
-                        int productionYear = input.nextInt();
+                        int productionYear = Integer.parseInt(input.readLine());
                         getReviews(connection, title, productionYear);
                         break;
                     case 12:
                         quit = true;
+                        connection.close();
                         System.out.println("Thank you for using the Stars 'R' Us Trader Interface. Goodbye!");
                 }
             }
