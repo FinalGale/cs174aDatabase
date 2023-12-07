@@ -4,9 +4,9 @@ import oracle.jdbc.pool.OracleDataSource;
 import oracle.jdbc.OracleConnection;
 
 public class traderInterface {
-    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/daniellu/Downloads/Wallet_projDB";
+    final static String DB_URL = "jdbc:oracle:thin:@projDB_tp?TNS_ADMIN=/Users/YamMaster909/Downloads/Wallet_projDB";
     final static String DB_USER = "ADMIN";
-    final static String DB_PASSWORD = "Cookie12345+";
+    final static String DB_PASSWORD = "Cookie12345+";   
 
     public static void deposit(Connection connection, double depositAmount, int marketAccountID) throws SQLException {
         System.out.println("Preparing to Deposit...");
