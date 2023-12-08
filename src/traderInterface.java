@@ -623,7 +623,7 @@ public class traderInterface {
             getStockTransaction.setString(1, stockSymbol);
             getStockTransaction.setString(2, username);
             ResultSet resultSet = getStockTransaction.executeQuery();
-
+            
             System.out.println("Your transactions this month for " + stockSymbol + ": ");
             while (resultSet.next()) {
                 double buyPrice = resultSet.getDouble(3);
@@ -632,8 +632,8 @@ public class traderInterface {
                 double sellPrice = resultSet.getDouble(7);
                 double quantity = resultSet.getDouble(8);
                 System.out.println("Date: " + date + "; Transaction Type: " + transactionType +
-                        "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "")
-                        + "; Quantity: " + quantity);
+                "; Buy Price: " + buyPrice + (transactionType == "sell" ? ("; Sell Price: " + sellPrice) : "")
+                + "; Quantity: " + quantity);
             }
             getStockTransaction.close();
         } catch (Exception e) {
@@ -689,7 +689,7 @@ public class traderInterface {
             queryString = "SELECT * FROM SignedContract WHERE stockSymbol = ?";
             PreparedStatement getContractInfo = connection.prepareStatement(queryString);
             getContractInfo.setString(1, stockSymbol);
-            resultSet = getStockInfo.executeQuery();
+            resultSet = getContractInfo.executeQuery();
 
             System.out.println("Movie Contracts signed by " + name + ": ");
             while (resultSet.next()) {
